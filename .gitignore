@@ -1,0 +1,359 @@
+# ============================================================================
+# .gitignore para Projeto de Análise de Ciclos
+# Python + Flask + Pandas + Excel
+# ============================================================================
+
+# ============================================================================
+# PYTHON
+# ============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# ============================================================================
+# AMBIENTES VIRTUAIS
+# ============================================================================
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+virtualenv/
+pipenv/
+.pipenv/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ============================================================================
+# FLASK/WEB FRAMEWORK
+# ============================================================================
+
+# Flask
+instance/
+.webassets-cache
+
+# Flask session files
+flask_session/
+
+# ============================================================================
+# JUPYTER NOTEBOOK
+# ============================================================================
+
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# IPython
+profile_default/
+ipython_config.py
+
+# ============================================================================
+# IDEs e EDITORES
+# ============================================================================
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be added to the global gitignore or merged into this file.
+.idea/
+*.swp
+*.swo
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ============================================================================
+# SISTEMA OPERACIONAL
+# ============================================================================
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================================================
+# DADOS E ARQUIVOS ESPECÍFICOS DO PROJETO
+# ============================================================================
+
+# Arquivos de log
+*.log
+logs/
+app.log
+flask.log
+
+# Dados temporários e cache
+cache/
+tmp/
+temp/
+*.tmp
+*.cache
+
+# Arquivos de backup
+*.bak
+*.backup
+*~
+
+# Arquivos grandes de dados (descomente se necessário)
+# *.xlsx
+# *.xls
+# *.csv
+# CicloDetalhado/*.xlsx
+
+# Arquivos de configuração sensíveis
+config.py
+settings.py
+secrets.py
+local_settings.py
+
+# Certificados e chaves
+*.pem
+*.key
+*.crt
+*.cert
+
+# ============================================================================
+# FERRAMENTAS DE DESENVOLVIMENTO
+# ============================================================================
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js (se usar ferramentas JS)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Docker
+.dockerignore
+Dockerfile.dev
+
+# ============================================================================
+# DOCUMENTAÇÃO E ASSETS
+# ============================================================================
+
+# Arquivos temporários de documentação
+docs/_build/
+docs/build/
+
+# Arquivos de mídia temporários
+*.png.bak
+*.jpg.bak
+*.gif.bak
+
+# ============================================================================
+# FERRAMENTAS DE ANÁLISE
+# ============================================================================
+
+# Profiling
+*.prof
+
+# Coverage reports
+.coverage
+htmlcov/
+
+# Memory profiling
+*.mprof
+
+# ============================================================================
+# CLOUD E DEPLOYMENT
+# ============================================================================
+
+# AWS
+.aws/
+
+# Google Cloud
+.gcloud/
+
+# Azure
+.azure/
+
+# Heroku
+.heroku/
+
+# ============================================================================
+# OUTROS
+# ============================================================================
+
+# Arquivos temporários do sistema
+*.swp
+*.swo
+*~
+
+# Arquivos de lock
+*.lock
+
+# Arquivos de patch
+*.patch
+*.diff
+
+# Arquivos comprimidos (se não forem parte do projeto)
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+
+# ============================================================================
+# ESPECÍFICO DESTE PROJETO - ANÁLISE DE CICLOS
+# ============================================================================
+
+# Outputs de análise temporários
+outputs/
+reports/
+exports/
+
+# Arquivos de configuração local da aplicação
+local_config.py
+dev_settings.py
+
+# Arquivos de teste temporários
+test_*.py
+temp_*.py
+
+# Cache de dados processados (se implementado)
+data_cache/
+processed_data/
+
+# Screenshots e imagens temporárias
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+!static/images/*
+
+# Arquivos de desenvolvimento
+dev/
+development/
+sandbox/
+
+# ============================================================================
+# NOTA: Para adicionar exceções, use ! antes do padrão
+# Exemplo: !important_file.txt
+# ============================================================================

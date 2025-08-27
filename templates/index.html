@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Análise de Ciclos</title>
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+      }
+      .container {
+        display: flex;
+      }
+      .menu {
+        width: 200px;
+        border-right: 1px solid #ccc;
+        padding-right: 20px;
+      }
+      .content {
+        flex-grow: 1;
+        padding-left: 20px;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li a {
+        display: block;
+        color: #000;
+        padding: 8px 16px;
+        text-decoration: none;
+      }
+      li a.active {
+        background-color: #4caf50;
+        color: white;
+      }
+      li a:hover:not(.active) {
+        background-color: #555;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="menu">
+        <h2>Análises</h2>
+        <ul>
+          <li>
+            <a
+              href="#"
+              class="active"
+              onclick="showAnalysis('cycles_by_year_month')"
+              >Ciclos por Ano/Mês</a
+            >
+          </li>
+          <!-- Add more menu items here -->
+        </ul>
+      </div>
+      <div class="content">
+        <div id="chart"></div>
+      </div>
+    </div>
+
+    <script>
+      function showAnalysis(analysisType) {
+        if (analysisType === "cycles_by_year_month") {
+          console.log("🚀 [FRONTEND] Iniciando análise de ciclos por ano/mês");
+          const startTime = performance.now();
+
+          // Limpar o gráfico e mostrar carregamento
+          document.getElementById("chart").innerHTML =
+            '<div style="text-align: center; padding: 50px;">Carregando dados...</div>';
+
+          console.log(
+            "🌐 [FRONTEND] Fazendo requisição para /api/cycles_by_year_month"
+          );
+          const requestStart = performance.now();
+
+          fetch("/api/cycles_by_year_month")
+            .then((response) => {
+              const requestTime = performance.now() - requestStart;
+              console.log(
+                `🌐 [FRONTEND] Resposta recebida em ${requestTime.toFixed(2)}ms`
+              );
+              console.log(
+                `🌐 [FRONTEND] Status: ${response.status} ${response.statusText}`
+              );
+              console.log(
+                `🌐 [FRONTEND] Headers:`,
+                Object.fromEntries(response.headers.entries())
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
+
+              return response.json();
+            })
+            .then((data) => {
+              const parseTime = performance.now() - requestStart;
+              console.log(
+                `📊 [FRONTEND] JSON parseado em ${parseTime.toFixed(2)}ms`
+              );
+              console.log("📊 [FRONTEND] Dados recebidos:", data);
+
+              // Verificar se há erro na resposta
+              if (data.error) {
+                console.error(
+                  "❌ [FRONTEND] Erro retornado pela API:",
+                  data.error
+                );
+                document.getElementById(
+                  "chart"
+                ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">Erro: ${data.error}</div>`;
+                return;
+              }
+
+              // Verificar se há dados
+              if (!data || data.length === 0) {
+                console.warn(
+                  "⚠️ [FRONTEND] Nenhum dado encontrado na resposta"
+                );
+                document.getElementById("chart").innerHTML =
+                  '<div style="text-align: center; padding: 50px;">Nenhum dado encontrado.</div>';
+                return;
+              }
+
+              console.log(`📈 [FRONTEND] ${data.length} períodos encontrados`);
+              console.log(
+                "📈 [FRONTEND] Primeiros registros:",
+                data.slice(0, 3)
+              );
+
+              const x_values = data.map((item) => item.AnoMes);
+              const y_values = data.map((item) => item.count);
+
+              console.log("📊 [FRONTEND] Valores X:", x_values);
+              console.log("📊 [FRONTEND] Valores Y:", y_values);
+
+              const processStart = performance.now();
+
+              const plotData = [
+                {
+                  x: x_values,
+                  y: y_values,
+                  type: "bar",
+                  marker: {
+                    color: y_values.map((v, i) => {
+                      // Gradiente de cores baseado no valor
+                      const intensity =
+                        (v - Math.min(...y_values)) /
+                        (Math.max(...y_values) - Math.min(...y_values));
+                      const r = Math.floor(31 + intensity * (74 - 31)); // De azul escuro para azul claro
+                      const g = Math.floor(119 + intensity * (158 - 119));
+                      const b = Math.floor(180 + intensity * (255 - 180));
+                      return `rgb(${r},${g},${b})`;
+                    }),
+                    line: {
+                      color: "#0d47a1",
+                      width: 1,
+                    },
+                    opacity: 0.8,
+                  },
+                  text: y_values.map((v) => {
+                    // Formatar números com separador de milhares
+                    return v.toLocaleString("pt-BR");
+                  }),
+                  textposition: "outside",
+                  textfont: {
+                    size: 10,
+                    color: "#333",
+                    family: "Arial, sans-serif",
+                  },
+                  hovertemplate:
+                    "<b>%{x}</b><br>" +
+                    "Ciclos: %{y:,.0f}<br>" +
+                    "<extra></extra>",
+                },
+              ];
+
+              const layout = {
+                title: {
+                  text: "Contagem de Ciclos por Ano/Mês",
+                  font: {
+                    size: 20,
+                    color: "#333",
+                    family: "Arial, sans-serif",
+                  },
+                },
+                xaxis: {
+                  title: {
+                    text: "Período (Ano-Mês)",
+                    font: {
+                      size: 14,
+                      color: "#555",
+                    },
+                  },
+                  tickangle: -45,
+                  tickfont: {
+                    size: 11,
+                    color: "#666",
+                  },
+                  gridcolor: "#e1e5e9",
+                  linecolor: "#c1c7cd",
+                },
+                yaxis: {
+                  title: {
+                    text: "Quantidade de Ciclos",
+                    font: {
+                      size: 14,
+                      color: "#555",
+                    },
+                  },
+                  tickfont: {
+                    size: 11,
+                    color: "#666",
+                  },
+                  gridcolor: "#e1e5e9",
+                  linecolor: "#c1c7cd",
+                  zeroline: false,
+                },
+                margin: {
+                  l: 80,
+                  r: 40,
+                  t: 100,
+                  b: 120,
+                },
+                height: 500,
+                plot_bgcolor: "#fafbfc",
+                paper_bgcolor: "#ffffff",
+                bargap: 0.3,
+                showlegend: false,
+              };
+
+              const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ["pan2d", "lasso2d"],
+              };
+
+              console.log("📊 [FRONTEND] Criando gráfico com Plotly...");
+              const plotStart = performance.now();
+
+              Plotly.newPlot("chart", plotData, layout, config).then(() => {
+                const plotTime = performance.now() - plotStart;
+                const totalTime = performance.now() - startTime;
+                console.log(
+                  `✅ [FRONTEND] Gráfico criado em ${plotTime.toFixed(2)}ms`
+                );
+                console.log(
+                  `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+              });
+            })
+            .catch((error) => {
+              const errorTime = performance.now() - startTime;
+              console.error(
+                `❌ [FRONTEND] Erro após ${errorTime.toFixed(2)}ms:`,
+                error
+              );
+              console.error("❌ [FRONTEND] Stack trace:", error.stack);
+
+              let errorMessage = error.message;
+              if (
+                error.name === "TypeError" &&
+                error.message.includes("fetch")
+              ) {
+                errorMessage =
+                  "Erro de conexão com o servidor. Verifique se o Flask está rodando.";
+              }
+
+              document.getElementById(
+                "chart"
+              ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                 <h3>Erro ao carregar dados</h3>
+                 <p><strong>Mensagem:</strong> ${errorMessage}</p>
+                 <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
+                 <p><small>Verifique o console para mais detalhes</small></p>
+               </div>`;
+            });
+        }
+      }
+
+      // Load the default analysis
+      document.addEventListener("DOMContentLoaded", function () {
+        showAnalysis("cycles_by_year_month");
+      });
+    </script>
+  </body>
+</html>
