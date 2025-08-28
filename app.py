@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 import pandas as pd
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, send_from_directory
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -196,6 +196,11 @@ def get_processed_cycles_by_tipo_input():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/images/<filename>')
+def serve_image(filename):
+    """Servir imagens da pasta images"""
+    return send_from_directory('images', filename)
 
 @app.route('/api/cycles_by_year_month')
 def cycles_by_year_month():
