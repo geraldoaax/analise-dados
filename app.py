@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 import pandas as pd
-from flask import Flask, jsonify, render_template, send_from_directory
+from flask import Flask, jsonify, render_template, request, send_from_directory
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -92,16 +92,9 @@ def load_data_with_cache():
     
     return combined_df
 
-def get_processed_cycles_data():
-    """Obtém dados processados com cache"""
-    global _cache
-    
-    # Verificar se tem dados processados em cache
-    if _cache['processed_data'] is not None:
-        logger.info("⚡ Usando dados processados do cache")
-        return _cache['processed_data']
-    
-    logger.info("🔄 Processando dados pela primeira vez...")
+def get_processed_cycles_data(data_inicio=None, data_fim=None):
+    """Obtém dados processados com filtro de data"""
+    logger.info("🔄 Processando dados com filtro de data...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -117,6 +110,24 @@ def get_processed_cycles_data():
     
     # Remover datas inválidas
     df = df.dropna(subset=['DataHoraInicio'])
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
     
     logger.info("📅 Criando períodos...")
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
@@ -135,23 +146,11 @@ def get_processed_cycles_data():
     logger.info(f"✅ Processamento concluído em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} períodos encontrados")
     
-    # Cachear resultado processado
-    _cache['processed_data'] = result
-    logger.info("💾 Dados processados salvos no cache")
-    
     return result
 
-def get_processed_cycles_by_tipo_input():
-    """Obtém dados processados por Tipo Input com cache"""
-    global _cache
-    
-    # Verificar se tem dados processados em cache
-    cache_key = 'processed_data_tipo_input'
-    if _cache.get(cache_key) is not None:
-        logger.info("⚡ Usando dados processados por Tipo Input do cache")
-        return _cache[cache_key]
-    
-    logger.info("🔄 Processando dados por Tipo Input pela primeira vez...")
+def get_processed_cycles_by_tipo_input(data_inicio=None, data_fim=None):
+    """Obtém dados processados por Tipo Input com filtro de data"""
+    logger.info("🔄 Processando dados por Tipo Input com filtro de data...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -170,6 +169,24 @@ def get_processed_cycles_by_tipo_input():
     # Remover datas inválidas e valores nulos em Tipo Input
     df = df.dropna(subset=['DataHoraInicio', 'Tipo Input'])
     
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
+    
     logger.info("📅 Criando períodos...")
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
     
@@ -186,10 +203,6 @@ def get_processed_cycles_by_tipo_input():
     process_time = time.time() - process_start
     logger.info(f"✅ Processamento por Tipo Input concluído em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} registros encontrados")
-    
-    # Cachear resultado processado
-    _cache[cache_key] = result
-    logger.info("💾 Dados processados por Tipo Input salvos no cache")
     
     return result
 
@@ -208,8 +221,14 @@ def cycles_by_year_month():
     api_start_time = time.time()
     
     try:
-        # Usar função otimizada com cache
-        result = get_processed_cycles_data()
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        
+        # Usar função com filtros de data
+        result = get_processed_cycles_data(data_inicio, data_fim)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API concluída com sucesso!")
@@ -238,8 +257,14 @@ def cycles_by_tipo_input():
     api_start_time = time.time()
     
     try:
-        # Usar função otimizada com cache
-        result = get_processed_cycles_by_tipo_input()
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        
+        # Usar função com filtros de data
+        result = get_processed_cycles_by_tipo_input(data_inicio, data_fim)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API cycles_by_tipo_input concluída com sucesso!")

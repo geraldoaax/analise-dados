@@ -212,14 +212,133 @@
       }
 
       #chart {
-        background-color: var(--chart-paper);
-        border-radius: 8px;
         padding: 16px;
+        min-height: 500px;
+      }
+
+      /* Estilos para o header de filtros */
+      .chart-header {
+        background-color: var(--chart-paper);
+        border-radius: 8px 8px 0 0;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
 
-      [data-theme="dark"] #chart {
+      [data-theme="dark"] .chart-header {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+
+      .chart-title {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        font-size: 20px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .filters-row {
+        display: flex;
+        align-items: end;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .filter-group label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .filter-group input[type="datetime-local"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+      }
+
+      .filter-group input[type="datetime-local"]:focus {
+        outline: none;
+        border-color: var(--accent-secondary);
+        box-shadow: 0 0 0 2px rgba(68, 209, 221, 0.2);
+      }
+
+      .filter-actions {
+        display: flex;
+        gap: 12px;
+        align-items: end;
+      }
+
+      .search-button {
+        background-color: var(--accent-secondary);
+        color: #fff;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
+      }
+
+      .search-button:hover {
+        background-color: #3bb8c3;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(68, 209, 221, 0.4);
+      }
+
+      .search-button:active {
+        transform: translateY(0);
+      }
+
+      .search-button:disabled {
+        background-color: var(--gray-color);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .clear-filters {
+        background-color: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border-color);
+        padding: 10px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+      }
+
+      .clear-filters:hover {
+        background-color: var(--hover-bg);
+        color: var(--text-primary);
+      }
+
+      .chart-content {
+        border-radius: 0 0 8px 8px;
+        border: 1px solid var(--border-color);
+        background-color: var(--chart-paper);
       }
 
       /* Responsividade */
@@ -243,6 +362,52 @@
         .theme-toggle {
           padding: 8px 12px;
           font-size: 12px;
+        }
+
+        .container {
+          flex-direction: column;
+        }
+
+        .menu {
+          width: 100%;
+          padding: 16px;
+        }
+
+        .menu ul {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+        }
+
+        .menu li {
+          margin-bottom: 0;
+          min-width: fit-content;
+        }
+
+        .filters-row {
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .filter-group {
+          min-width: 100%;
+        }
+
+        .filter-actions {
+          justify-content: stretch;
+        }
+
+        .search-button,
+        .clear-filters {
+          flex: 1;
+        }
+
+        .chart-header {
+          padding: 16px;
+        }
+
+        .chart-title {
+          font-size: 18px;
         }
       }
     </style>
@@ -270,12 +435,12 @@
             <a
               href="#"
               class="active"
-              onclick="showAnalysis('cycles_by_year_month')"
+              onclick="selecionarAnalise('cycles_by_year_month')"
               >Ciclos por Ano/Mês</a
             >
           </li>
           <li>
-            <a href="#" onclick="showAnalysis('cycles_by_tipo_input')"
+            <a href="#" onclick="selecionarAnalise('cycles_by_tipo_input')"
               >Ciclos por Tipo Input</a
             >
           </li>
@@ -283,13 +448,145 @@
         </ul>
       </div>
       <div class="content">
-        <div class="section-screen">
-          <div id="chart"></div>
+        <!-- Header com filtros -->
+        <div class="chart-header">
+          <h2 class="chart-title" id="chartTitle">
+            <span>📊</span>
+            <span id="chartTitleText">Análise de Ciclos</span>
+          </h2>
+          <div class="filters-row">
+            <div class="filter-group">
+              <label for="dataInicio">Data/Hora Início:</label>
+              <input
+                type="datetime-local"
+                id="dataInicio"
+                name="dataInicio"
+                step="1"
+                title="Formato: DD/MM/AAAA HH:MM:SS"
+              />
+            </div>
+            <div class="filter-group">
+              <label for="dataFim">Data/Hora Fim:</label>
+              <input
+                type="datetime-local"
+                id="dataFim"
+                name="dataFim"
+                step="1"
+                title="Formato: DD/MM/AAAA HH:MM:SS"
+              />
+            </div>
+            <div class="filter-actions">
+              <button
+                class="search-button"
+                onclick="buscarDados()"
+                id="btnBuscar"
+              >
+                <span>🔎</span>
+                <span>Buscar</span>
+              </button>
+              <button class="clear-filters" onclick="limparFiltros()">
+                <span>🗑️</span>
+                <span>Limpar</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Área do gráfico -->
+        <div class="chart-content">
+          <div id="chart">
+            <div
+              style="
+                text-align: center;
+                padding: 100px 50px;
+                color: var(--text-secondary);
+              "
+            >
+              <h3>📊 Selecione um Período</h3>
+              <p>
+                Utilize os filtros de Data/Hora Início e Fim acima para definir
+                o período desejado.
+              </p>
+              <p>
+                <small>
+                  Os campos suportam data e hora com precisão de segundos.<br />
+                  Clique em "Buscar" para visualizar os dados filtrados.
+                </small>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
     <script>
+      // Variáveis globais
+      let tipoAnaliseAtual = "cycles_by_year_month";
+
+      // Gerenciamento de Filtros
+      function limparFiltros() {
+        document.getElementById("dataInicio").value = "";
+        document.getElementById("dataFim").value = "";
+        console.log("🗑️ Filtros limpos");
+      }
+
+      function selecionarAnalise(tipo) {
+        // Atualizar menu ativo
+        const menuLinks = document.querySelectorAll(".menu a");
+        menuLinks.forEach((link) => link.classList.remove("active"));
+
+        // Atualizar título do header
+        const chartTitleText = document.getElementById("chartTitleText");
+
+        if (tipo === "cycles_by_year_month") {
+          menuLinks[0].classList.add("active");
+          chartTitleText.textContent = "Ciclos por Ano/Mês";
+        } else if (tipo === "cycles_by_tipo_input") {
+          menuLinks[1].classList.add("active");
+          chartTitleText.textContent = "Ciclos por Tipo Input";
+        }
+
+        // Salvar tipo selecionado
+        tipoAnaliseAtual = tipo;
+        console.log(`📊 Análise selecionada: ${tipo}`);
+
+        // Limpar gráfico quando trocar de análise
+        document.getElementById("chart").innerHTML = `
+          <div style="text-align: center; padding: 100px 50px; color: var(--text-secondary);">
+            <h3>📊 Selecione um Período</h3>
+            <p>Utilize os filtros de Data/Hora Início e Fim acima para definir o período desejado.</p>
+            <p><small>Os campos suportam data e hora com precisão de segundos.<br/>Clique em "Buscar" para visualizar os dados filtrados.</small></p>
+          </div>
+        `;
+      }
+
+      function buscarDados() {
+        const dataInicio = document.getElementById("dataInicio").value;
+        const dataFim = document.getElementById("dataFim").value;
+
+        console.log("🔍 Iniciando busca com filtros:");
+        console.log(`   📅 Data Início: ${dataInicio || "Não informada"}`);
+        console.log(`   📅 Data Fim: ${dataFim || "Não informada"}`);
+        console.log(`   📊 Tipo Análise: ${tipoAnaliseAtual}`);
+
+        // Validar se pelo menos uma data foi informada
+        if (!dataInicio && !dataFim) {
+          alert(
+            "⚠️ Por favor, informe pelo menos uma data (início ou fim) para realizar a busca."
+          );
+          return;
+        }
+
+        // Validar se data início não é maior que data fim
+        if (dataInicio && dataFim && new Date(dataInicio) > new Date(dataFim)) {
+          alert("⚠️ A data de início não pode ser maior que a data de fim.");
+          return;
+        }
+
+        // Executar análise com filtros
+        showAnalysis(tipoAnaliseAtual, dataInicio, dataFim);
+      }
+
       // Gerenciamento de Tema
       function initTheme() {
         const savedTheme = localStorage.getItem("theme") || "light";
@@ -375,16 +672,25 @@
         }
       }
 
-      function showAnalysis(analysisType) {
-        // Atualizar menu ativo
-        const menuLinks = document.querySelectorAll(".menu a");
-        menuLinks.forEach((link) => link.classList.remove("active"));
+      function showAnalysis(analysisType, dataInicio = null, dataFim = null) {
+        // Não atualizar menu aqui, isso é feito em selecionarAnalise()
 
-        if (analysisType === "cycles_by_year_month") {
-          menuLinks[0].classList.add("active");
-        } else if (analysisType === "cycles_by_tipo_input") {
-          menuLinks[1].classList.add("active");
+        // Construir URL com parâmetros de filtro
+        let url = `/api/${analysisType}`;
+        const params = new URLSearchParams();
+
+        if (dataInicio) {
+          params.append("data_inicio", dataInicio);
         }
+        if (dataFim) {
+          params.append("data_fim", dataFim);
+        }
+
+        if (params.toString()) {
+          url += "?" + params.toString();
+        }
+
+        console.log(`🌐 URL da API: ${url}`);
 
         if (analysisType === "cycles_by_year_month") {
           console.log("🚀 [FRONTEND] Iniciando análise de ciclos por ano/mês");
@@ -394,12 +700,10 @@
           document.getElementById("chart").innerHTML =
             '<div style="text-align: center; padding: 50px;">Carregando dados...</div>';
 
-          console.log(
-            "🌐 [FRONTEND] Fazendo requisição para /api/cycles_by_year_month"
-          );
+          console.log(`🌐 [FRONTEND] Fazendo requisição para ${url}`);
           const requestStart = performance.now();
 
-          fetch("/api/cycles_by_year_month")
+          fetch(url)
             .then((response) => {
               const requestTime = performance.now() - requestStart;
               console.log(
@@ -618,12 +922,10 @@
           document.getElementById("chart").innerHTML =
             '<div style="text-align: center; padding: 50px;">Carregando dados...</div>';
 
-          console.log(
-            "🌐 [FRONTEND] Fazendo requisição para /api/cycles_by_tipo_input"
-          );
+          console.log(`🌐 [FRONTEND] Fazendo requisição para ${url}`);
           const requestStart = performance.now();
 
-          fetch("/api/cycles_by_tipo_input")
+          fetch(url)
             .then((response) => {
               const requestTime = performance.now() - requestStart;
               console.log(
@@ -899,10 +1201,15 @@
         }
       }
 
-      // Load the default analysis
+      // Inicializar aplicação
       document.addEventListener("DOMContentLoaded", function () {
         initTheme();
-        showAnalysis("cycles_by_year_month");
+
+        // Não carregar dados automaticamente
+        console.log("🏠 Aplicação iniciada. Aguardando filtros do usuário...");
+
+        // Configurar análise padrão selecionada
+        tipoAnaliseAtual = "cycles_by_year_month";
       });
     </script>
   </body>
