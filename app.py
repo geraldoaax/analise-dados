@@ -62,8 +62,8 @@ def load_data_with_cache():
         file_start = time.time()
         
         try:
-            # Carregar apenas as colunas necessárias para economizar memória
-            df = pd.read_excel(filename, usecols=['DataHoraInicio'])  # Apenas a coluna necessária
+            # Carregar as colunas necessárias
+            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input'])
             rows = len(df)
             total_rows += rows
             df_list.append(df)
@@ -141,6 +141,58 @@ def get_processed_cycles_data():
     
     return result
 
+def get_processed_cycles_by_tipo_input():
+    """Obtém dados processados por Tipo Input com cache"""
+    global _cache
+    
+    # Verificar se tem dados processados em cache
+    cache_key = 'processed_data_tipo_input'
+    if _cache.get(cache_key) is not None:
+        logger.info("⚡ Usando dados processados por Tipo Input do cache")
+        return _cache[cache_key]
+    
+    logger.info("🔄 Processando dados por Tipo Input pela primeira vez...")
+    process_start = time.time()
+    
+    # Carregar dados brutos
+    df = load_data_with_cache()
+    
+    # Verificar se as colunas existem
+    if 'DataHoraInicio' not in df.columns:
+        raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
+    
+    # Processar dados de forma otimizada
+    logger.info("🔄 Convertendo datas...")
+    df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
+    
+    # Remover datas inválidas e valores nulos em Tipo Input
+    df = df.dropna(subset=['DataHoraInicio', 'Tipo Input'])
+    
+    logger.info("📅 Criando períodos...")
+    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    
+    logger.info("📊 Agrupando dados por Tipo Input...")
+    cycle_counts = df.groupby(['AnoMes', 'Tipo Input']).size().reset_index(name='count')
+    
+    # Converter período para string e ordenar
+    cycle_counts['AnoMes'] = cycle_counts['AnoMes'].astype(str)
+    cycle_counts = cycle_counts.sort_values(['AnoMes', 'Tipo Input'])
+    
+    # Converter para dict para JSON
+    result = cycle_counts.to_dict(orient='records')
+    
+    process_time = time.time() - process_start
+    logger.info(f"✅ Processamento por Tipo Input concluído em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} registros encontrados")
+    
+    # Cachear resultado processado
+    _cache[cache_key] = result
+    logger.info("💾 Dados processados por Tipo Input salvos no cache")
+    
+    return result
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -175,6 +227,36 @@ def cycles_by_year_month():
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 
+@app.route('/api/cycles_by_tipo_input')
+def cycles_by_tipo_input():
+    logger.info("🚀 API cycles_by_tipo_input chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Usar função otimizada com cache
+        result = get_processed_cycles_by_tipo_input()
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API cycles_by_tipo_input concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        # Log dos primeiros registros para debug
+        if result:
+            logger.info("📋 Primeiros registros:")
+            for i, record in enumerate(result[:5]):
+                logger.info(f"   {i+1}. {record['AnoMes']} - {record['Tipo Input']}: {record['count']:,} ciclos")
+            if len(result) > 5:
+                logger.info(f"   ... e mais {len(result) - 5} registros")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API cycles_by_tipo_input após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
+
 @app.route('/api/clear_cache')
 def clear_cache():
     """Endpoint para limpar o cache manualmente"""
@@ -184,6 +266,7 @@ def clear_cache():
     old_cache = _cache.copy()
     _cache['raw_data'] = None
     _cache['processed_data'] = None
+    _cache['processed_data_tipo_input'] = None
     _cache['files_hash'] = None
     _cache['last_check'] = None
     
