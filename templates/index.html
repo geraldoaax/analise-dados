@@ -6,42 +6,215 @@
     <title>Análise de Ciclos</title>
     <script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
     <style>
+      :root {
+        /* Tema Claro - Padrão Easymine */
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9f6f9;
+        --bg-menu: #ffffff;
+        --text-primary: #000000;
+        --text-secondary: #333333;
+        --border-color: #cccccc;
+        --accent-color: #ffcc29;
+        --accent-secondary: #44d1dd;
+        --hover-bg: rgba(255, 204, 41, 0.1);
+        --chart-bg: #fafbfc;
+        --chart-paper: #ffffff;
+        --grid-color: #e1e5e9;
+        --line-color: #c1c7cd;
+        --button-bg: #f0f0f0;
+        --button-text: #333333;
+        --success-color: #00a854;
+        --warning-color: #ffbf00;
+        --error-color: #f04134;
+        --info-color: #44d1dd;
+      }
+
+      [data-theme="dark"] {
+        /* Tema Escuro - Padrão Easymine */
+        --bg-primary: #232333;
+        --bg-secondary: #2c2e41;
+        --bg-menu: #1b1b2b;
+        --text-primary: rgba(249, 246, 249, 0.9);
+        --text-secondary: rgba(249, 246, 249, 0.8);
+        --border-color: rgba(249, 246, 249, 0.1);
+        --accent-color: #ffcc29;
+        --accent-secondary: #44d1dd;
+        --hover-bg: rgba(255, 204, 41, 0.2);
+        --chart-bg: rgba(35, 35, 51, 0.7);
+        --chart-paper: #232333;
+        --grid-color: rgba(249, 246, 249, 0.1);
+        --line-color: rgba(249, 246, 249, 0.15);
+        --button-bg: rgba(35, 35, 51, 0.7);
+        --button-text: rgba(249, 246, 249, 0.9);
+        --success-color: #00a854;
+        --warning-color: #ffbf00;
+        --error-color: #f04134;
+        --info-color: #44d1dd;
+        --gray-color: #7a85a1;
+      }
+
+      * {
+        transition: background-color 0.3s ease, color 0.3s ease,
+          border-color 0.3s ease;
+      }
+
       body {
         font-family: sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 0;
       }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 0.3px 0.9px rgba(0, 0, 0, 0.12),
+          0 1.6px 3.6px rgba(0, 0, 0, 0.12);
+      }
+
+      .header h1 {
+        margin: 0;
+        color: var(--text-primary);
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .theme-toggle {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: 1px solid var(--border-color);
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .theme-toggle:hover {
+        background-color: var(--hover-bg);
+        color: var(--text-primary);
+        border-color: var(--accent-color);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      [data-theme="dark"] .theme-toggle:hover {
+        box-shadow: 0 2px 8px rgba(255, 204, 41, 0.3);
+      }
+
       .container {
         display: flex;
+        min-height: calc(100vh - 70px);
       }
+
       .menu {
-        width: 200px;
-        border-right: 1px solid #ccc;
-        padding-right: 20px;
+        width: 220px;
+        background-color: var(--bg-menu);
+        border-right: 1px solid var(--border-color);
+        padding: 24px 16px;
       }
+
+      .menu h2 {
+        color: var(--text-primary);
+        margin-top: 0;
+        margin-bottom: 24px;
+        font-size: 18px;
+        font-weight: 600;
+        border-bottom: 2px solid var(--accent-color);
+        padding-bottom: 8px;
+      }
+
       .content {
         flex-grow: 1;
-        padding-left: 20px;
+        padding: 24px;
+        background-color: var(--bg-primary);
       }
+
+      .section-screen {
+        background-color: var(--chart-paper);
+        border-radius: 8px;
+        padding: 24px 16px;
+        margin-top: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-color);
+      }
+
+      [data-theme="dark"] .section-screen {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border-color);
+      }
+
       ul {
         list-style-type: none;
         padding: 0;
+        margin: 0;
       }
+
+      li {
+        margin-bottom: 8px;
+      }
+
       li a {
         display: block;
-        color: #000;
-        padding: 8px 16px;
+        color: var(--text-secondary);
+        padding: 14px 16px;
         text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        position: relative;
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
       }
+
       li a.active {
-        background-color: #4caf50;
-        color: white;
+        background-color: var(--accent-color);
+        color: #000;
+        font-weight: 600;
+        border: 1px solid var(--accent-color);
+        box-shadow: 0 2px 8px rgba(255, 204, 41, 0.3);
       }
+
       li a:hover:not(.active) {
-        background-color: #555;
-        color: white;
+        background-color: var(--hover-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        transform: translateX(4px);
+      }
+
+      [data-theme="dark"] li a:hover:not(.active) {
+        border: 1px solid var(--accent-secondary);
+        box-shadow: 0 2px 8px rgba(68, 209, 221, 0.2);
+      }
+
+      #chart {
+        background-color: var(--chart-paper);
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      [data-theme="dark"] #chart {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       }
     </style>
   </head>
   <body>
+    <div class="header">
+      <h1>📊 Análise de Ciclos</h1>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">Tema Escuro</span>
+      </button>
+    </div>
     <div class="container">
       <div class="menu">
         <h2>Análises</h2>
@@ -63,11 +236,98 @@
         </ul>
       </div>
       <div class="content">
-        <div id="chart"></div>
+        <div class="section-screen">
+          <div id="chart"></div>
+        </div>
       </div>
     </div>
 
     <script>
+      // Gerenciamento de Tema
+      function initTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+        const theme =
+          savedTheme === "auto" ? (prefersDark ? "dark" : "light") : savedTheme;
+
+        document.documentElement.setAttribute("data-theme", theme);
+        updateThemeButton(theme);
+      }
+
+      function toggleTheme() {
+        const currentTheme =
+          document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        document.documentElement.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+        updateThemeButton(newTheme);
+
+        // Atualizar gráficos se existirem
+        updateChartsForTheme(newTheme);
+      }
+
+      function updateThemeButton(theme) {
+        const themeIcon = document.getElementById("themeIcon");
+        const themeText = document.getElementById("themeText");
+
+        if (theme === "dark") {
+          themeIcon.textContent = "☀️";
+          themeText.textContent = "Tema Claro";
+        } else {
+          themeIcon.textContent = "🌙";
+          themeText.textContent = "Tema Escuro";
+        }
+      }
+
+      function getThemeColors(theme) {
+        if (theme === "dark") {
+          return {
+            background: "rgba(35, 35, 51, 0.7)",
+            paper: "#232333",
+            text: "rgba(249, 246, 249, 0.9)",
+            grid: "rgba(249, 246, 249, 0.1)",
+            line: "rgba(249, 246, 249, 0.15)",
+            accent: "#ffcc29",
+            secondary: "#44d1dd",
+            success: "#00a854",
+            warning: "#ffbf00",
+            error: "#f04134",
+          };
+        } else {
+          return {
+            background: "#fafbfc",
+            paper: "#ffffff",
+            text: "#333333",
+            grid: "#e1e5e9",
+            line: "#c1c7cd",
+            accent: "#ffcc29",
+            secondary: "#44d1dd",
+            success: "#00a854",
+            warning: "#ffbf00",
+            error: "#f04134",
+          };
+        }
+      }
+
+      function updateChartsForTheme(theme) {
+        const chartElement = document.getElementById("chart");
+        if (chartElement && chartElement.data) {
+          // Re-render charts with new theme colors
+          const currentAnalysis = document.querySelector(".menu a.active");
+          if (currentAnalysis) {
+            const analysisType = currentAnalysis.onclick
+              .toString()
+              .match(/showAnalysis\('(.+?)'\)/)?.[1];
+            if (analysisType) {
+              showAnalysis(analysisType);
+            }
+          }
+        }
+      }
+
       function showAnalysis(analysisType) {
         // Atualizar menu ativo
         const menuLinks = document.querySelectorAll(".menu a");
@@ -157,6 +417,11 @@
 
               const processStart = performance.now();
 
+              // Obter cores do tema atual
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
               const plotData = [
                 {
                   x: x_values,
@@ -186,7 +451,7 @@
                   textposition: "outside",
                   textfont: {
                     size: 10,
-                    color: "#333",
+                    color: themeColors.text,
                     family: "Arial, sans-serif",
                   },
                   hovertemplate:
@@ -201,7 +466,7 @@
                   text: "Contagem de Ciclos por Ano/Mês",
                   font: {
                     size: 20,
-                    color: "#333",
+                    color: themeColors.text,
                     family: "Arial, sans-serif",
                   },
                 },
@@ -210,31 +475,31 @@
                     text: "Período (Ano-Mês)",
                     font: {
                       size: 14,
-                      color: "#555",
+                      color: themeColors.text,
                     },
                   },
                   tickangle: -45,
                   tickfont: {
                     size: 11,
-                    color: "#666",
+                    color: themeColors.text,
                   },
-                  gridcolor: "#e1e5e9",
-                  linecolor: "#c1c7cd",
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
                 },
                 yaxis: {
                   title: {
                     text: "Quantidade de Ciclos",
                     font: {
                       size: 14,
-                      color: "#555",
+                      color: themeColors.text,
                     },
                   },
                   tickfont: {
                     size: 11,
-                    color: "#666",
+                    color: themeColors.text,
                   },
-                  gridcolor: "#e1e5e9",
-                  linecolor: "#c1c7cd",
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
                   zeroline: false,
                 },
                 margin: {
@@ -244,8 +509,8 @@
                   b: 120,
                 },
                 height: 500,
-                plot_bgcolor: "#fafbfc",
-                paper_bgcolor: "#ffffff",
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
                 bargap: 0.3,
                 showlegend: false,
               };
@@ -367,6 +632,11 @@
               // Processar dados para barras empilhadas
               const processStart = performance.now();
 
+              // Obter cores do tema atual
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
               // Obter todos os períodos únicos e tipos únicos
               const periodos = [
                 ...new Set(data.map((item) => item.AnoMes)),
@@ -378,11 +648,20 @@
               console.log("📊 [FRONTEND] Períodos:", periodos);
               console.log("📊 [FRONTEND] Tipos Input:", tipos);
 
-              // Criar cores para cada tipo
+              // Calcular totais por período
+              const totaisPorPeriodo = periodos.map(periodo => {
+                return data
+                  .filter(item => item.AnoMes === periodo)
+                  .reduce((total, item) => total + item.count, 0);
+              });
+
+              console.log("📊 [FRONTEND] Totais por período:", totaisPorPeriodo);
+
+              // Criar cores para cada tipo usando padrão Easymine
               const cores = {
-                "#TIMELINE-ADD": "#ff6b6b",
-                "CARGA DE PRODUÇÃO": "#4ecdc4",
-                EMBARCADO: "#45b7d1",
+                "#TIMELINE-ADD": themeColors.error,
+                "CARGA DE PRODUÇÃO": themeColors.secondary,
+                EMBARCADO: themeColors.accent,
               };
 
               // Criar dados para cada tipo
@@ -401,19 +680,19 @@
                   name: tipo,
                   type: "bar",
                   marker: {
-                    color: cores[tipo] || "#95a5a6",
+                    color:
+                      cores[tipo] ||
+                      (currentTheme === "dark" ? "#7a85a1" : "#95a5a6"),
                     opacity: 0.8,
                     line: {
-                      color: "#2c3e50",
+                      color: themeColors.line,
                       width: 1,
                     },
                   },
-                  text: valores.map((v) =>
-                    v > 0 ? v.toLocaleString("pt-BR") : ""
-                  ),
+                  text: valores.map((v) => v > 0 ? v.toLocaleString("pt-BR") : ""),
                   textposition: "inside",
                   textfont: {
-                    size: 10,
+                    size: 9,
                     color: "#fff",
                     family: "Arial, sans-serif",
                   },
@@ -427,12 +706,30 @@
                 };
               });
 
+              // Adicionar série de totais (invisible para mostrar só os labels)
+              plotData.push({
+                x: periodos,
+                y: totaisPorPeriodo,
+                type: "scatter",
+                mode: "text",
+                text: totaisPorPeriodo.map(v => v.toLocaleString("pt-BR")),
+                textposition: "top center",
+                textfont: {
+                  size: 11,
+                  color: themeColors.text,
+                  family: "Arial, sans-serif",
+                  weight: "bold"
+                },
+                showlegend: false,
+                hovertemplate: "<b>%{x}</b><br>Total: %{y:,.0f}<extra></extra>"
+              });
+
               const layout = {
                 title: {
-                  text: "Contagem de Ciclos por Tipo Input (Empilhado)",
+                  text: "Contagem de Ciclos por Tipo Input",
                   font: {
                     size: 20,
-                    color: "#333",
+                    color: themeColors.text,
                     family: "Arial, sans-serif",
                   },
                 },
@@ -441,31 +738,31 @@
                     text: "Período (Ano-Mês)",
                     font: {
                       size: 14,
-                      color: "#555",
+                      color: themeColors.text,
                     },
                   },
                   tickangle: -45,
                   tickfont: {
                     size: 11,
-                    color: "#666",
+                    color: themeColors.text,
                   },
-                  gridcolor: "#e1e5e9",
-                  linecolor: "#c1c7cd",
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
                 },
                 yaxis: {
                   title: {
                     text: "Quantidade de Ciclos",
                     font: {
                       size: 14,
-                      color: "#555",
+                      color: themeColors.text,
                     },
                   },
                   tickfont: {
                     size: 11,
-                    color: "#666",
+                    color: themeColors.text,
                   },
-                  gridcolor: "#e1e5e9",
-                  linecolor: "#c1c7cd",
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
                   zeroline: false,
                 },
                 barmode: "stack",
@@ -476,20 +773,23 @@
                   b: 120,
                 },
                 height: 500,
-                plot_bgcolor: "#fafbfc",
-                paper_bgcolor: "#ffffff",
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
                 bargap: 0.3,
                 legend: {
                   x: 1.02,
                   y: 0.5,
                   xanchor: "left",
                   yanchor: "middle",
-                  bgcolor: "rgba(255,255,255,0.8)",
-                  bordercolor: "#ccc",
+                  bgcolor:
+                    currentTheme === "dark"
+                      ? "rgba(35, 35, 51, 0.9)"
+                      : "rgba(255,255,255,0.9)",
+                  bordercolor: themeColors.line,
                   borderwidth: 1,
                   font: {
                     size: 12,
-                    color: "#333",
+                    color: themeColors.text,
                   },
                 },
               };
@@ -549,6 +849,7 @@
 
       // Load the default analysis
       document.addEventListener("DOMContentLoaded", function () {
+        initTheme();
         showAnalysis("cycles_by_year_month");
       });
     </script>
