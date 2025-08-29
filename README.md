@@ -9,8 +9,9 @@ Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos
 - Visualização de dados através de múltiplos gráficos:
   - Contagem de ciclos por ano/mês
   - Ciclos por tipo input
-  - Relatório de produção por tipo de atividade (soma de massa)
+  - Produção por tipo de atividade (soma de massa)
   - Produção por especificação de material (soma de massa)
+  - Produção por material (soma de massa)
 - Estrutura modular para fácil adição de novas análises e tipos de gráficos.
 
 ## Pré-requisitos
@@ -63,6 +64,7 @@ Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta 
 - `Massa`: Massa transportada (para relatórios de produção)
 - `Tipo de atividade`: Tipo da atividade realizada
 - `Especificacao de material`: Especificação do material transportado
+- `Material`: Material transportado
 
 ### 5. Executar a Aplicação
 
@@ -113,5 +115,6 @@ Para adicionar novas análises, siga os passos:
 
 - **Ciclos por Ano/Mês**: Contagem de ciclos agrupados por período
 - **Ciclos por Tipo Input**: Contagem de ciclos segmentados por tipo de input
-- **Relatório de Produção**: Soma de massa por tipo de atividade
+- **Produção por Tipo de Atividade**: Soma de massa por tipo de atividade
 - **Produção por Esp. Material**: Soma de massa por especificação de material
+- **Produção por Material**: Soma de massa por material (top 3 materiais + "Outros")

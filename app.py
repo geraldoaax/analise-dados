@@ -62,8 +62,8 @@ def load_data_with_cache():
         file_start = time.time()
         
         try:
-            # Carregar as colunas necessárias (incluindo Massa, Tipo de atividade e Especificacao de material)
-            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material'])
+            # Carregar as colunas necessárias (incluindo Massa, Tipo de atividade, Especificacao de material e Material)
+            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material', 'Material'])
             rows = len(df)
             total_rows += rows
             df_list.append(df)
@@ -326,6 +326,97 @@ def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
     
     return result
 
+def get_processed_production_by_material(data_inicio=None, data_fim=None):
+    """Obtém dados de produção (soma de massa) por material com filtro de data"""
+    logger.info("🔄 Processando dados de produção por material com filtro de data...")
+    process_start = time.time()
+    
+    # Carregar dados brutos
+    df = load_data_with_cache()
+    
+    # Verificar se as colunas existem
+    if 'DataHoraInicio' not in df.columns:
+        raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
+    if 'Material' not in df.columns:
+        raise ValueError('Coluna Material não encontrada nos dados')
+    if 'Massa' not in df.columns:
+        raise ValueError('Coluna Massa não encontrada nos dados')
+    
+    # Processar dados de forma otimizada
+    logger.info("🔄 Convertendo datas...")
+    df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
+    
+    # Remover datas inválidas e valores nulos
+    df = df.dropna(subset=['DataHoraInicio', 'Material', 'Massa'])
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
+    
+    logger.info("📅 Criando períodos...")
+    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    
+    logger.info("📊 Agrupando dados por material e somando massa...")
+    # Primeiro, calcular totais por material para identificar os maiores
+    totals_by_material = df.groupby('Material')['Massa'].sum().sort_values(ascending=False)
+    logger.info(f"📋 Materiais encontrados: {len(totals_by_material)}")
+    
+    # Definir quantos materiais mostrar individualmente (top 3)
+    top_n = 3
+    top_materials = totals_by_material.head(top_n).index.tolist()
+    logger.info(f"🔝 Top {top_n} materiais: {top_materials}")
+    
+    # Log detalhado dos materiais e suas massas
+    for i, (material, massa) in enumerate(totals_by_material.head(10).items(), 1):
+        status = "🏆 TOP" if material in top_materials else "📦 OUTROS"
+        logger.info(f"   {i:2d}. {material}: {massa:,.0f} kg - {status}")
+    
+    # Criar nova coluna agrupando materiais menores em "Outros"
+    df['Material_Agrupado'] = df['Material'].apply(
+        lambda x: x if x in top_materials else 'Outros'
+    )
+    
+    # Agrupar por período e material agrupado
+    production_data = df.groupby(['AnoMes', 'Material_Agrupado'])['Massa'].sum().reset_index(name='massa_total')
+    
+    # Renomear coluna para manter compatibilidade com frontend
+    production_data = production_data.rename(columns={'Material_Agrupado': 'Material'})
+    
+    # Converter período para string e ordenar
+    production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+    production_data = production_data.sort_values(['AnoMes', 'Material'])
+    
+    # Log do agrupamento realizado
+    materiais_finais = production_data['Material'].unique()
+    tem_outros = 'Outros' in materiais_finais
+    logger.info(f"📋 Materiais no resultado final: {list(materiais_finais)}")
+    if tem_outros:
+        outros_total = production_data[production_data['Material'] == 'Outros']['massa_total'].sum()
+        logger.info(f"📦 Total agrupado em 'Outros': {outros_total:,.2f} kg")
+    
+    # Converter para dict para JSON
+    result = production_data.to_dict(orient='records')
+    
+    process_time = time.time() - process_start
+    logger.info(f"✅ Processamento de produção por material concluído em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} registros encontrados")
+    
+    return result
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -476,6 +567,42 @@ def production_by_material_spec():
     except Exception as e:
         error_time = time.time() - api_start_time
         logger.error(f"❌ Erro na API production_by_material_spec após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
+
+@app.route('/api/production_by_material')
+def production_by_material():
+    logger.info("🚀 API production_by_material chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        
+        # Usar função com filtros de data
+        result = get_processed_production_by_material(data_inicio, data_fim)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_material concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        # Log dos primeiros registros para debug
+        if result:
+            logger.info("📋 Primeiros registros:")
+            for i, record in enumerate(result[:5]):
+                logger.info(f"   {i+1}. {record['AnoMes']} - {record['Material']}: {record['massa_total']:,.2f} kg")
+            if len(result) > 5:
+                logger.info(f"   ... e mais {len(result) - 5} registros")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_material após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 
