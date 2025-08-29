@@ -6,7 +6,11 @@ Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos
 
 - Leitura e união automática de todos os arquivos `.xlsx` presentes na pasta `CicloDetalhado`.
 - Interface web interativa construída com Flask.
-- Visualização de dados através de gráficos (atualmente, contagem de ciclos por ano/mês).
+- Visualização de dados através de múltiplos gráficos:
+  - Contagem de ciclos por ano/mês
+  - Ciclos por tipo input
+  - Relatório de produção por tipo de atividade (soma de massa)
+  - Produção por especificação de material (soma de massa)
 - Estrutura modular para fácil adição de novas análises e tipos de gráficos.
 
 ## Pré-requisitos
@@ -52,7 +56,13 @@ pip install -r requirements.txt
 
 ### 4. Preparar os Dados
 
-Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta `CicloDetalhado/` dentro do diretório raiz do projeto. O script espera que cada arquivo Excel contenha uma coluna de data, que será usada para as análises. Por padrão, o código espera uma coluna chamada `Data`.
+Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta `CicloDetalhado/` dentro do diretório raiz do projeto. O script espera que cada arquivo Excel contenha as seguintes colunas:
+
+- `DataHoraInicio`: Data e hora de início do ciclo
+- `Tipo Input`: Tipo do input do ciclo
+- `Massa`: Massa transportada (para relatórios de produção)
+- `Tipo de atividade`: Tipo da atividade realizada
+- `Especificacao de material`: Especificação do material transportado
 
 ### 5. Executar a Aplicação
 
@@ -88,12 +98,20 @@ analise_ciclo/
 Para adicionar novas análises, siga os passos:
 
 1.  **No `app.py`:**
-    *   Crie uma nova rota `@app.route('/api/sua_nova_analise')`.
-    *   Dentro da função, carregue os dados (`df = load_data()`) e realize sua análise com `pandas`.
-    *   Retorne os resultados em formato JSON usando `jsonify(seus_dados.to_dict(orient='records'))`.
+
+    - Crie uma nova rota `@app.route('/api/sua_nova_analise')`.
+    - Dentro da função, carregue os dados (`df = load_data()`) e realize sua análise com `pandas`.
+    - Retorne os resultados em formato JSON usando `jsonify(seus_dados.to_dict(orient='records'))`.
 
 2.  **No `templates/index.html`:**
-    *   Adicione um novo item ao menu (`<li><a href="#" onclick="showAnalysis('sua_nova_analise')">Sua Nova Análise</a></li>`).
-    *   Na função `showAnalysis(analysisType)`, adicione um novo `else if (analysisType === 'sua_nova_analise')`.
-    *   Dentro deste bloco, faça um `fetch` para sua nova rota de API (`/api/sua_nova_analise`) e use Plotly.js para criar o gráfico desejado com os dados retornados.
+    - Adicione um novo item ao menu (`<li><a href="#" onclick="selecionarAnalise('sua_nova_analise')">Sua Nova Análise</a></li>`).
+    - Na função `selecionarAnalise(tipo)`, adicione uma nova condição para atualizar o título.
+    - Na função `showAnalysis(analysisType)`, adicione um novo `else if (analysisType === 'sua_nova_analise')`.
+    - Dentro deste bloco, faça um `fetch` para sua nova rota de API (`/api/sua_nova_analise`) e use Plotly.js para criar o gráfico desejado com os dados retornados.
 
+### Exemplos de Análises Disponíveis
+
+- **Ciclos por Ano/Mês**: Contagem de ciclos agrupados por período
+- **Ciclos por Tipo Input**: Contagem de ciclos segmentados por tipo de input
+- **Relatório de Produção**: Soma de massa por tipo de atividade
+- **Produção por Esp. Material**: Soma de massa por especificação de material
