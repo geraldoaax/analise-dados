@@ -116,5 +116,5 @@ Para adicionar novas análises, siga os passos:
 - **Ciclos por Ano/Mês**: Contagem de ciclos agrupados por período
 - **Ciclos por Tipo Input**: Contagem de ciclos segmentados por tipo de input
 - **Produção por Tipo de Atividade**: Soma de massa por tipo de atividade
-- **Produção por Esp. Material**: Soma de massa por especificação de material
+- **Produção por Esp. Material**: Soma de massa por especificação de material (top 3 especificações + "Outros")
 - **Produção por Material**: Soma de massa por material (top 3 materiais + "Outros")

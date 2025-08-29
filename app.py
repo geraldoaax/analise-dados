@@ -311,11 +311,42 @@ def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
     
     logger.info("📊 Agrupando dados por especificação de material e somando massa...")
-    production_data = df.groupby(['AnoMes', 'Especificacao de material'])['Massa'].sum().reset_index(name='massa_total')
+    # Primeiro, calcular totais por especificação para identificar os maiores
+    totals_by_spec = df.groupby('Especificacao de material')['Massa'].sum().sort_values(ascending=False)
+    logger.info(f"📋 Especificações encontradas: {len(totals_by_spec)}")
+    
+    # Definir quantos especificações mostrar individualmente (top 3)
+    top_n = 3
+    top_specs = totals_by_spec.head(top_n).index.tolist()
+    logger.info(f"🔝 Top {top_n} especificações: {top_specs}")
+    
+    # Log detalhado das especificações e suas massas
+    for i, (spec, massa) in enumerate(totals_by_spec.head(10).items(), 1):
+        status = "🏆 TOP" if spec in top_specs else "📦 OUTROS"
+        logger.info(f"   {i:2d}. {spec}: {massa:,.0f} kg - {status}")
+    
+    # Criar nova coluna agrupando especificações menores em "Outros"
+    df['Spec_Agrupada'] = df['Especificacao de material'].apply(
+        lambda x: x if x in top_specs else 'Outros'
+    )
+    
+    # Agrupar por período e especificação agrupada
+    production_data = df.groupby(['AnoMes', 'Spec_Agrupada'])['Massa'].sum().reset_index(name='massa_total')
+    
+    # Renomear coluna para manter compatibilidade com frontend
+    production_data = production_data.rename(columns={'Spec_Agrupada': 'Especificacao de material'})
     
     # Converter período para string e ordenar
     production_data['AnoMes'] = production_data['AnoMes'].astype(str)
     production_data = production_data.sort_values(['AnoMes', 'Especificacao de material'])
+    
+    # Log do agrupamento realizado
+    specs_finais = production_data['Especificacao de material'].unique()
+    tem_outros = 'Outros' in specs_finais
+    logger.info(f"📋 Especificações no resultado final: {list(specs_finais)}")
+    if tem_outros:
+        outros_total = production_data[production_data['Especificacao de material'] == 'Outros']['massa_total'].sum()
+        logger.info(f"📦 Total agrupado em 'Outros': {outros_total:,.2f} kg")
     
     # Converter para dict para JSON
     result = production_data.to_dict(orient='records')

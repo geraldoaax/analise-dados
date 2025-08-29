@@ -1606,11 +1606,18 @@
               const periodos = [
                 ...new Set(data.map((item) => item.AnoMes)),
               ].sort();
-              const especificacoes = [
+              const especificacoesTemp = [
                 ...new Set(
                   data.map((item) => item["Especificacao de material"])
                 ),
               ].sort();
+
+              // Ordenar especificações com "Outros" sempre por último
+              const especificacoes = especificacoesTemp
+                .filter((e) => e !== "Outros")
+                .concat(
+                  especificacoesTemp.includes("Outros") ? ["Outros"] : []
+                );
 
               console.log("📊 [FRONTEND] Períodos:", periodos);
               console.log(
@@ -1630,14 +1637,39 @@
                 totaisPorPeriodo
               );
 
-              // Criar cores para cada especificação usando padrão Easymine
-              const cores = {
-                MINÉRIO: themeColors.accent,
-                ESTÉRIL: themeColors.error,
-                "DAC LG": themeColors.secondary,
-                WASTE: themeColors.warning,
-                BRITA: themeColors.success,
-              };
+              // Paleta de cores diversificada para especificações
+              const paletaCoresSpec = [
+                themeColors.accent, // Amarelo Easymine (#ffcc29)
+                themeColors.error, // Vermelho (#f04134)
+                themeColors.secondary, // Azul (#44d1dd)
+                themeColors.success, // Verde (#00a854)
+                themeColors.warning, // Laranja (#ffbf00)
+                "#9c27b0", // Roxo
+                "#e91e63", // Rosa
+                "#00bcd4", // Ciano
+                "#ff5722", // Laranja profundo
+                "#795548", // Marrom
+                "#607d8b", // Azul acinzentado
+                "#3f51b5", // Índigo
+              ];
+
+              // Função para gerar cores automaticamente para especificações
+              function getCorEspecificacao(especificacao, index) {
+                if (especificacao === "Outros") {
+                  return currentTheme === "dark" ? "#7a85a1" : "#95a5a6"; // Cor neutra para "Outros"
+                }
+                // Usar índice para atribuir cor da paleta
+                return paletaCoresSpec[index % paletaCoresSpec.length];
+              }
+
+              // Criar mapa de cores dinâmico
+              const cores = {};
+              especificacoes.forEach((especificacao, index) => {
+                cores[especificacao] = getCorEspecificacao(
+                  especificacao,
+                  index
+                );
+              });
 
               // Criar dados para cada especificação
               const plotData = especificacoes.map((especificacao) => {
