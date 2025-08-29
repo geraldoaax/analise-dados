@@ -463,6 +463,11 @@
               >Produção por Material</a
             >
           </li>
+          <li>
+            <a href="#" onclick="selecionarAnalise('productivity_analysis')"
+              >📊 Análise de Produtividade</a
+            >
+          </li>
           <!-- Add more menu items here -->
         </ul>
       </div>
@@ -572,6 +577,9 @@
         } else if (tipo === "production_by_material") {
           menuLinks[4].classList.add("active");
           chartTitleText.textContent = "Produção por Material";
+        } else if (tipo === "productivity_analysis") {
+          menuLinks[5].classList.add("active");
+          chartTitleText.textContent = "📊 Análise de Produtividade";
         }
 
         // Salvar tipo selecionado
@@ -2190,6 +2198,285 @@
                 "chart"
               ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
                  <h3>Erro ao carregar dados</h3>
+                 <p><strong>Mensagem:</strong> ${errorMessage}</p>
+                 <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
+                 <p><small>Verifique o console para mais detalhes</small></p>
+               </div>`;
+            });
+        } else if (analysisType === "productivity_analysis") {
+          console.log("🚀 [FRONTEND] Iniciando análise de produtividade");
+          const startTime = performance.now();
+
+          // Limpar o gráfico e mostrar carregamento
+          document.getElementById("chart").innerHTML =
+            '<div style="text-align: center; padding: 50px;">Carregando dados de produtividade...</div>';
+
+          console.log(`🌐 [FRONTEND] Fazendo requisição para ${url}`);
+          const requestStart = performance.now();
+
+          fetch(url)
+            .then((response) => {
+              const requestTime = performance.now() - requestStart;
+              console.log(
+                `🌐 [FRONTEND] Resposta recebida em ${requestTime.toFixed(2)}ms`
+              );
+              console.log(
+                `🌐 [FRONTEND] Status: ${response.status} ${response.statusText}`
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
+
+              return response.json();
+            })
+            .then((data) => {
+              const parseTime = performance.now() - requestStart;
+              console.log(
+                `📊 [FRONTEND] JSON parseado em ${parseTime.toFixed(2)}ms`
+              );
+              console.log("📊 [FRONTEND] Dados recebidos:", data);
+
+              // Verificar se há erro na resposta
+              if (data.error) {
+                console.error(
+                  "❌ [FRONTEND] Erro retornado pela API:",
+                  data.error
+                );
+                document.getElementById(
+                  "chart"
+                ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">Erro: ${data.error}</div>`;
+                return;
+              }
+
+              // Verificar se há dados
+              if (!data || data.length === 0) {
+                console.warn(
+                  "⚠️ [FRONTEND] Nenhum dado encontrado na resposta"
+                );
+                document.getElementById("chart").innerHTML =
+                  '<div style="text-align: center; padding: 50px;">Nenhum dado encontrado.</div>';
+                return;
+              }
+
+              console.log(`📈 [FRONTEND] ${data.length} períodos encontrados`);
+              console.log(
+                "📈 [FRONTEND] Primeiros registros:",
+                data.slice(0, 3)
+              );
+
+              // Preparar dados para múltiplos gráficos
+              const x_values = data.map((item) => item.AnoMes);
+              const massa_media_values = data.map(
+                (item) => item.massa_media_por_ciclo
+              );
+              const total_ciclos_values = data.map((item) => item.total_ciclos);
+              const massa_total_values = data.map(
+                (item) => item.massa_total / 1000
+              ); // Converter para toneladas
+              const crescimento_prod_values = data.map(
+                (item) => item.crescimento_produtividade_pct
+              );
+
+              console.log("📊 [FRONTEND] Valores X:", x_values);
+              console.log(
+                "📊 [FRONTEND] Valores Produtividade:",
+                massa_media_values
+              );
+
+              const processStart = performance.now();
+
+              // Obter cores do tema atual
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
+              // Criar subplot com múltiplos gráficos
+              const trace1 = {
+                x: x_values,
+                y: massa_media_values,
+                type: "scatter",
+                mode: "lines+markers",
+                name: "Produtividade (kg/ciclo)",
+                line: { color: themeColors.accent, width: 3 },
+                marker: { size: 8, color: themeColors.accent },
+                yaxis: "y1",
+                hovertemplate:
+                  "<b>%{x}</b><br>Produtividade: %{y:.2f} kg/ciclo<extra></extra>",
+              };
+
+              const trace2 = {
+                x: x_values,
+                y: total_ciclos_values,
+                type: "bar",
+                name: "Total Ciclos",
+                marker: { color: themeColors.secondary, opacity: 0.7 },
+                yaxis: "y2",
+                hovertemplate:
+                  "<b>%{x}</b><br>Ciclos: %{y:,.0f}<extra></extra>",
+              };
+
+              const trace3 = {
+                x: x_values,
+                y: massa_total_values,
+                type: "scatter",
+                mode: "lines+markers",
+                name: "Massa Total (t)",
+                line: { color: themeColors.success, width: 2, dash: "dash" },
+                marker: { size: 6, color: themeColors.success },
+                yaxis: "y3",
+                hovertemplate:
+                  "<b>%{x}</b><br>Massa Total: %{y:,.1f} t<extra></extra>",
+              };
+
+              const trace4 = {
+                x: x_values,
+                y: crescimento_prod_values,
+                type: "bar",
+                name: "Crescimento (%)",
+                marker: {
+                  color: crescimento_prod_values.map((v) =>
+                    v >= 0 ? themeColors.success : themeColors.error
+                  ),
+                  opacity: 0.8,
+                },
+                yaxis: "y4",
+                hovertemplate:
+                  "<b>%{x}</b><br>Crescimento: %{y:.1f}%<extra></extra>",
+              };
+
+              const layout = {
+                title: {
+                  text: "📊 Análise de Produtividade - Múltiplas Métricas",
+                  font: {
+                    size: 20,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                },
+                xaxis: {
+                  title: {
+                    text: "Período (Ano-Mês)",
+                    font: { size: 14, color: themeColors.text },
+                  },
+                  tickfont: { size: 12, color: themeColors.text },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                },
+                yaxis: {
+                  title: {
+                    text: "Produtividade (kg/ciclo)",
+                    font: { size: 14, color: themeColors.accent },
+                  },
+                  side: "left",
+                  tickfont: { size: 12, color: themeColors.text },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                },
+                yaxis2: {
+                  title: {
+                    text: "Total de Ciclos",
+                    font: { size: 14, color: themeColors.secondary },
+                  },
+                  overlaying: "y",
+                  side: "right",
+                  tickfont: { size: 12, color: themeColors.text },
+                  showgrid: false,
+                },
+                yaxis3: {
+                  title: {
+                    text: "Massa Total (t)",
+                    font: { size: 14, color: themeColors.success },
+                  },
+                  overlaying: "y",
+                  side: "right",
+                  position: 0.85,
+                  tickfont: { size: 12, color: themeColors.text },
+                  showgrid: false,
+                },
+                yaxis4: {
+                  title: {
+                    text: "Crescimento (%)",
+                    font: { size: 14, color: themeColors.text },
+                  },
+                  overlaying: "y",
+                  side: "left",
+                  position: 0.15,
+                  tickfont: { size: 12, color: themeColors.text },
+                  showgrid: false,
+                },
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
+                font: { color: themeColors.text },
+                legend: {
+                  orientation: "h",
+                  x: 0.5,
+                  xanchor: "center",
+                  y: -0.2,
+                  font: { size: 12, color: themeColors.text },
+                },
+                margin: { l: 80, r: 80, t: 100, b: 100 },
+                hovermode: "x unified",
+              };
+
+              const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: [
+                  "select2d",
+                  "lasso2d",
+                  "autoScale2d",
+                  "hoverCompareCartesian",
+                ],
+                displaylogo: false,
+              };
+
+              console.log(
+                "📊 [FRONTEND] Criando gráfico de produtividade com Plotly..."
+              );
+              const plotStart = performance.now();
+
+              Plotly.newPlot(
+                "chart",
+                [trace1, trace2, trace3, trace4],
+                layout,
+                config
+              ).then(() => {
+                const plotTime = performance.now() - plotStart;
+                const totalTime = performance.now() - startTime;
+                console.log(
+                  `✅ [FRONTEND] Gráfico de produtividade criado em ${plotTime.toFixed(
+                    2
+                  )}ms`
+                );
+                console.log(
+                  `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+              });
+            })
+            .catch((error) => {
+              const errorTime = performance.now() - startTime;
+              console.error(
+                `❌ [FRONTEND] Erro após ${errorTime.toFixed(2)}ms:`,
+                error
+              );
+              console.error("❌ [FRONTEND] Stack trace:", error.stack);
+
+              let errorMessage = error.message;
+              if (
+                error.name === "TypeError" &&
+                error.message.includes("fetch")
+              ) {
+                errorMessage =
+                  "Erro de conexão com o servidor. Verifique se o Flask está rodando.";
+              }
+
+              document.getElementById(
+                "chart"
+              ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                 <h3>Erro ao carregar dados de produtividade</h3>
                  <p><strong>Mensagem:</strong> ${errorMessage}</p>
                  <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
                  <p><small>Verifique o console para mais detalhes</small></p>

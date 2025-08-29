@@ -448,6 +448,94 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
     
     return result
 
+def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
+    """Obtém análise de produtividade: média de massa por ciclo, eficiência e métricas de desempenho"""
+    logger.info("🔄 Processando análise de produtividade com filtro de data...")
+    process_start = time.time()
+    
+    # Carregar dados brutos
+    df = load_data_with_cache()
+    
+    # Verificar se as colunas existem
+    if 'DataHoraInicio' not in df.columns:
+        raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
+    if 'Massa' not in df.columns:
+        raise ValueError('Coluna Massa não encontrada nos dados')
+    
+    # Processar dados de forma otimizada
+    logger.info("🔄 Convertendo datas...")
+    df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
+    
+    # Remover datas inválidas e valores nulos em Massa
+    df = df.dropna(subset=['DataHoraInicio', 'Massa'])
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
+    
+    logger.info("📅 Criando períodos...")
+    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    
+    logger.info("📊 Calculando métricas de produtividade...")
+    
+    # Agrupar por período e calcular métricas
+    productivity_metrics = df.groupby('AnoMes').agg({
+        'Massa': ['count', 'sum', 'mean', 'std'],
+        'DataHoraInicio': 'count'
+    }).round(2)
+    
+    # Simplificar nomes das colunas
+    productivity_metrics.columns = ['total_ciclos', 'massa_total', 'massa_media_por_ciclo', 'desvio_padrao_massa', 'total_registros']
+    
+    # Adicionar métricas de eficiência
+    productivity_metrics['produtividade_kg_ciclo'] = productivity_metrics['massa_media_por_ciclo']
+    productivity_metrics['coeficiente_variacao'] = (productivity_metrics['desvio_padrao_massa'] / productivity_metrics['massa_media_por_ciclo'] * 100).round(2)
+    
+    # Calcular crescimento período anterior
+    productivity_metrics['crescimento_massa_pct'] = productivity_metrics['massa_total'].pct_change() * 100
+    productivity_metrics['crescimento_ciclos_pct'] = productivity_metrics['total_ciclos'].pct_change() * 100
+    productivity_metrics['crescimento_produtividade_pct'] = productivity_metrics['produtividade_kg_ciclo'].pct_change() * 100
+    
+    # Resetar index e converter período para string
+    productivity_metrics = productivity_metrics.reset_index()
+    productivity_metrics['AnoMes'] = productivity_metrics['AnoMes'].astype(str)
+    
+    # Preencher NaN com 0 para o primeiro período (sem período anterior para comparar)
+    productivity_metrics = productivity_metrics.fillna(0)
+    
+    # Ordenar por período
+    productivity_metrics = productivity_metrics.sort_values('AnoMes')
+    
+    # Log das métricas calculadas
+    logger.info("📊 Métricas de produtividade calculadas:")
+    for _, row in productivity_metrics.iterrows():
+        logger.info(f"   📅 {row['AnoMes']}: {row['total_ciclos']:,.0f} ciclos, "
+                   f"{row['massa_total']:,.0f} kg total, "
+                   f"{row['massa_media_por_ciclo']:,.2f} kg/ciclo média")
+    
+    # Converter para dict para JSON
+    result = productivity_metrics.to_dict(orient='records')
+    
+    process_time = time.time() - process_start
+    logger.info(f"✅ Análise de produtividade concluída em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} períodos analisados")
+    
+    return result
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -634,6 +722,44 @@ def production_by_material():
     except Exception as e:
         error_time = time.time() - api_start_time
         logger.error(f"❌ Erro na API production_by_material após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
+
+@app.route('/api/productivity_analysis')
+def productivity_analysis():
+    logger.info("🚀 API productivity_analysis chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        
+        # Usar função com filtros de data
+        result = get_processed_productivity_analysis(data_inicio, data_fim)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API productivity_analysis concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} períodos")
+        
+        # Log dos primeiros registros para debug
+        if result:
+            logger.info("📋 Primeiros registros de produtividade:")
+            for i, record in enumerate(result[:3]):
+                logger.info(f"   {i+1}. {record['AnoMes']}: {record['total_ciclos']:,} ciclos, "
+                           f"{record['massa_media_por_ciclo']:.2f} kg/ciclo, "
+                           f"crescimento: {record['crescimento_produtividade_pct']:.1f}%")
+            if len(result) > 3:
+                logger.info(f"   ... e mais {len(result) - 3} períodos")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API productivity_analysis após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 

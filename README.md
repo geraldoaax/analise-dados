@@ -12,6 +12,7 @@ Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos
   - Produção por tipo de atividade (soma de massa)
   - Produção por especificação de material (soma de massa)
   - Produção por material (soma de massa)
+  - **📊 Análise de Produtividade** (média de massa por ciclo, eficiência e métricas de desempenho)
 - Estrutura modular para fácil adição de novas análises e tipos de gráficos.
 
 ## Pré-requisitos
@@ -118,3 +119,10 @@ Para adicionar novas análises, siga os passos:
 - **Produção por Tipo de Atividade**: Soma de massa por tipo de atividade
 - **Produção por Esp. Material**: Soma de massa por especificação de material (top 3 especificações + "Outros")
 - **Produção por Material**: Soma de massa por material (top 3 materiais + "Outros")
+- **📊 Análise de Produtividade**:
+  - Média de massa por ciclo (produtividade)
+  - Total de ciclos por período
+  - Massa total transportada (em toneladas)
+  - Percentual de crescimento da produtividade
+  - Coeficiente de variação (consistência)
+  - Visualização multi-eixo com métricas integradas
