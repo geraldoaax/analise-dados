@@ -449,8 +449,8 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
     return result
 
 def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
-    """Obtém análise de produtividade: média de massa por ciclo, eficiência e métricas de desempenho"""
-    logger.info("🔄 Processando análise de produtividade com filtro de data...")
+    """Obtém análise de produtividade: toneladas por período e toneladas por ciclo"""
+    logger.info("🔄 Processando análise de produtividade simplificada com filtro de data...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -490,25 +490,23 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
     logger.info("📅 Criando períodos...")
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
     
-    logger.info("📊 Calculando métricas de produtividade...")
+    logger.info("📊 Calculando métricas de produtividade simplificadas...")
     
-    # Agrupar por período e calcular métricas
+    # Agrupar por período e calcular métricas simples
     productivity_metrics = df.groupby('AnoMes').agg({
-        'Massa': ['count', 'sum', 'mean', 'std'],
-        'DataHoraInicio': 'count'
+        'Massa': ['count', 'sum', 'mean']
     }).round(2)
     
     # Simplificar nomes das colunas
-    productivity_metrics.columns = ['total_ciclos', 'massa_total', 'massa_media_por_ciclo', 'desvio_padrao_massa', 'total_registros']
+    productivity_metrics.columns = ['total_ciclos', 'massa_total_kg', 'massa_media_kg_ciclo']
     
-    # Adicionar métricas de eficiência
-    productivity_metrics['produtividade_kg_ciclo'] = productivity_metrics['massa_media_por_ciclo']
-    productivity_metrics['coeficiente_variacao'] = (productivity_metrics['desvio_padrao_massa'] / productivity_metrics['massa_media_por_ciclo'] * 100).round(2)
+    # Converter para toneladas e calcular métricas principais
+    productivity_metrics['toneladas_total'] = (productivity_metrics['massa_total_kg'] / 1000).round(2)
+    productivity_metrics['toneladas_por_ciclo'] = (productivity_metrics['massa_media_kg_ciclo'] / 1000).round(3)
     
-    # Calcular crescimento período anterior
-    productivity_metrics['crescimento_massa_pct'] = productivity_metrics['massa_total'].pct_change() * 100
-    productivity_metrics['crescimento_ciclos_pct'] = productivity_metrics['total_ciclos'].pct_change() * 100
-    productivity_metrics['crescimento_produtividade_pct'] = productivity_metrics['produtividade_kg_ciclo'].pct_change() * 100
+    # Calcular crescimento em toneladas
+    productivity_metrics['crescimento_toneladas_pct'] = productivity_metrics['toneladas_total'].pct_change() * 100
+    productivity_metrics['crescimento_prod_pct'] = productivity_metrics['toneladas_por_ciclo'].pct_change() * 100
     
     # Resetar index e converter período para string
     productivity_metrics = productivity_metrics.reset_index()
@@ -521,17 +519,17 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
     productivity_metrics = productivity_metrics.sort_values('AnoMes')
     
     # Log das métricas calculadas
-    logger.info("📊 Métricas de produtividade calculadas:")
+    logger.info("📊 Métricas de produtividade simplificadas:")
     for _, row in productivity_metrics.iterrows():
-        logger.info(f"   📅 {row['AnoMes']}: {row['total_ciclos']:,.0f} ciclos, "
-                   f"{row['massa_total']:,.0f} kg total, "
-                   f"{row['massa_media_por_ciclo']:,.2f} kg/ciclo média")
+        logger.info(f"   📅 {row['AnoMes']}: {row['toneladas_total']:.1f} t total, "
+                   f"{row['toneladas_por_ciclo']:.3f} t/ciclo, "
+                   f"{row['total_ciclos']:,.0f} ciclos")
     
     # Converter para dict para JSON
     result = productivity_metrics.to_dict(orient='records')
     
     process_time = time.time() - process_start
-    logger.info(f"✅ Análise de produtividade concluída em {process_time:.2f}s")
+    logger.info(f"✅ Análise de produtividade simplificada concluída em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} períodos analisados")
     
     return result
@@ -749,9 +747,9 @@ def productivity_analysis():
         if result:
             logger.info("📋 Primeiros registros de produtividade:")
             for i, record in enumerate(result[:3]):
-                logger.info(f"   {i+1}. {record['AnoMes']}: {record['total_ciclos']:,} ciclos, "
-                           f"{record['massa_media_por_ciclo']:.2f} kg/ciclo, "
-                           f"crescimento: {record['crescimento_produtividade_pct']:.1f}%")
+                logger.info(f"   {i+1}. {record['AnoMes']}: {record['toneladas_total']:.1f} t total, "
+                           f"{record['toneladas_por_ciclo']:.3f} t/ciclo, "
+                           f"crescimento: {record['crescimento_toneladas_pct']:.1f}%")
             if len(result) > 3:
                 logger.info(f"   ... e mais {len(result) - 3} períodos")
         

@@ -465,7 +465,7 @@
           </li>
           <li>
             <a href="#" onclick="selecionarAnalise('productivity_analysis')"
-              >📊 Análise de Produtividade</a
+              >🚛 Produtividade (Toneladas)</a
             >
           </li>
           <!-- Add more menu items here -->
@@ -579,7 +579,7 @@
           chartTitleText.textContent = "Produção por Material";
         } else if (tipo === "productivity_analysis") {
           menuLinks[5].classList.add("active");
-          chartTitleText.textContent = "📊 Análise de Produtividade";
+          chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
         }
 
         // Salvar tipo selecionado
@@ -2267,23 +2267,18 @@
                 data.slice(0, 3)
               );
 
-              // Preparar dados para múltiplos gráficos
+              // Preparar dados para gráfico simples de produtividade
               const x_values = data.map((item) => item.AnoMes);
-              const massa_media_values = data.map(
-                (item) => item.massa_media_por_ciclo
-              );
-              const total_ciclos_values = data.map((item) => item.total_ciclos);
-              const massa_total_values = data.map(
-                (item) => item.massa_total / 1000
-              ); // Converter para toneladas
-              const crescimento_prod_values = data.map(
-                (item) => item.crescimento_produtividade_pct
+              const toneladas_total = data.map((item) => item.toneladas_total);
+              const toneladas_por_ciclo = data.map(
+                (item) => item.toneladas_por_ciclo
               );
 
               console.log("📊 [FRONTEND] Valores X:", x_values);
+              console.log("📊 [FRONTEND] Toneladas Total:", toneladas_total);
               console.log(
-                "📊 [FRONTEND] Valores Produtividade:",
-                massa_media_values
+                "📊 [FRONTEND] Toneladas/Ciclo:",
+                toneladas_por_ciclo
               );
 
               const processStart = performance.now();
@@ -2293,63 +2288,34 @@
                 document.documentElement.getAttribute("data-theme") || "light";
               const themeColors = getThemeColors(currentTheme);
 
-              // Criar subplot com múltiplos gráficos
+              // Gráfico simples: Barras para total, linha para produtividade
               const trace1 = {
                 x: x_values,
-                y: massa_media_values,
-                type: "scatter",
-                mode: "lines+markers",
-                name: "Produtividade (kg/ciclo)",
-                line: { color: themeColors.accent, width: 3 },
-                marker: { size: 8, color: themeColors.accent },
+                y: toneladas_total,
+                type: "bar",
+                name: "Toneladas Total",
+                marker: { color: themeColors.secondary, opacity: 0.8 },
                 yaxis: "y1",
                 hovertemplate:
-                  "<b>%{x}</b><br>Produtividade: %{y:.2f} kg/ciclo<extra></extra>",
+                  "<b>%{x}</b><br>Total: %{y:.1f} toneladas<extra></extra>",
               };
 
               const trace2 = {
                 x: x_values,
-                y: total_ciclos_values,
-                type: "bar",
-                name: "Total Ciclos",
-                marker: { color: themeColors.secondary, opacity: 0.7 },
-                yaxis: "y2",
-                hovertemplate:
-                  "<b>%{x}</b><br>Ciclos: %{y:,.0f}<extra></extra>",
-              };
-
-              const trace3 = {
-                x: x_values,
-                y: massa_total_values,
+                y: toneladas_por_ciclo,
                 type: "scatter",
                 mode: "lines+markers",
-                name: "Massa Total (t)",
-                line: { color: themeColors.success, width: 2, dash: "dash" },
-                marker: { size: 6, color: themeColors.success },
-                yaxis: "y3",
+                name: "Produtividade (t/ciclo)",
+                line: { color: themeColors.accent, width: 4 },
+                marker: { size: 10, color: themeColors.accent },
+                yaxis: "y2",
                 hovertemplate:
-                  "<b>%{x}</b><br>Massa Total: %{y:,.1f} t<extra></extra>",
-              };
-
-              const trace4 = {
-                x: x_values,
-                y: crescimento_prod_values,
-                type: "bar",
-                name: "Crescimento (%)",
-                marker: {
-                  color: crescimento_prod_values.map((v) =>
-                    v >= 0 ? themeColors.success : themeColors.error
-                  ),
-                  opacity: 0.8,
-                },
-                yaxis: "y4",
-                hovertemplate:
-                  "<b>%{x}</b><br>Crescimento: %{y:.1f}%<extra></extra>",
+                  "<b>%{x}</b><br>Produtividade: %{y:.3f} t/ciclo<extra></extra>",
               };
 
               const layout = {
                 title: {
-                  text: "📊 Análise de Produtividade - Múltiplas Métricas",
+                  text: "🚛 Produtividade: Toneladas por Período",
                   font: {
                     size: 20,
                     color: themeColors.text,
@@ -2367,8 +2333,8 @@
                 },
                 yaxis: {
                   title: {
-                    text: "Produtividade (kg/ciclo)",
-                    font: { size: 14, color: themeColors.accent },
+                    text: "Toneladas Total por Período",
+                    font: { size: 14, color: themeColors.secondary },
                   },
                   side: "left",
                   tickfont: { size: 12, color: themeColors.text },
@@ -2377,33 +2343,11 @@
                 },
                 yaxis2: {
                   title: {
-                    text: "Total de Ciclos",
-                    font: { size: 14, color: themeColors.secondary },
+                    text: "Produtividade (toneladas/ciclo)",
+                    font: { size: 14, color: themeColors.accent },
                   },
                   overlaying: "y",
                   side: "right",
-                  tickfont: { size: 12, color: themeColors.text },
-                  showgrid: false,
-                },
-                yaxis3: {
-                  title: {
-                    text: "Massa Total (t)",
-                    font: { size: 14, color: themeColors.success },
-                  },
-                  overlaying: "y",
-                  side: "right",
-                  position: 0.85,
-                  tickfont: { size: 12, color: themeColors.text },
-                  showgrid: false,
-                },
-                yaxis4: {
-                  title: {
-                    text: "Crescimento (%)",
-                    font: { size: 14, color: themeColors.text },
-                  },
-                  overlaying: "y",
-                  side: "left",
-                  position: 0.15,
                   tickfont: { size: 12, color: themeColors.text },
                   showgrid: false,
                 },
@@ -2414,10 +2358,10 @@
                   orientation: "h",
                   x: 0.5,
                   xanchor: "center",
-                  y: -0.2,
+                  y: -0.15,
                   font: { size: 12, color: themeColors.text },
                 },
-                margin: { l: 80, r: 80, t: 100, b: 100 },
+                margin: { l: 80, r: 80, t: 80, b: 80 },
                 hovermode: "x unified",
               };
 
@@ -2434,27 +2378,26 @@
               };
 
               console.log(
-                "📊 [FRONTEND] Criando gráfico de produtividade com Plotly..."
+                "📊 [FRONTEND] Criando gráfico simples de produtividade com Plotly..."
               );
               const plotStart = performance.now();
 
-              Plotly.newPlot(
-                "chart",
-                [trace1, trace2, trace3, trace4],
-                layout,
-                config
-              ).then(() => {
-                const plotTime = performance.now() - plotStart;
-                const totalTime = performance.now() - startTime;
-                console.log(
-                  `✅ [FRONTEND] Gráfico de produtividade criado em ${plotTime.toFixed(
-                    2
-                  )}ms`
-                );
-                console.log(
-                  `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
-                );
-              });
+              Plotly.newPlot("chart", [trace1, trace2], layout, config).then(
+                () => {
+                  const plotTime = performance.now() - plotStart;
+                  const totalTime = performance.now() - startTime;
+                  console.log(
+                    `✅ [FRONTEND] Gráfico simples de produtividade criado em ${plotTime.toFixed(
+                      2
+                    )}ms`
+                  );
+                  console.log(
+                    `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(
+                      2
+                    )}ms`
+                  );
+                }
+              );
             })
             .catch((error) => {
               const errorTime = performance.now() - startTime;
