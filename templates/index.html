@@ -444,6 +444,13 @@
               >Ciclos por Tipo Input</a
             >
           </li>
+          <li>
+            <a
+              href="#"
+              onclick="selecionarAnalise('production_by_activity_type')"
+              >Relatório de Produção</a
+            >
+          </li>
           <!-- Add more menu items here -->
         </ul>
       </div>
@@ -544,6 +551,9 @@
         } else if (tipo === "cycles_by_tipo_input") {
           menuLinks[1].classList.add("active");
           chartTitleText.textContent = "Ciclos por Tipo Input";
+        } else if (tipo === "production_by_activity_type") {
+          menuLinks[2].classList.add("active");
+          chartTitleText.textContent = "Relatório de Produção";
         }
 
         // Salvar tipo selecionado
@@ -1164,6 +1174,308 @@
                 const totalTime = performance.now() - startTime;
                 console.log(
                   `✅ [FRONTEND] Gráfico empilhado criado em ${plotTime.toFixed(
+                    2
+                  )}ms`
+                );
+                console.log(
+                  `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+              });
+            })
+            .catch((error) => {
+              const errorTime = performance.now() - startTime;
+              console.error(
+                `❌ [FRONTEND] Erro após ${errorTime.toFixed(2)}ms:`,
+                error
+              );
+              console.error("❌ [FRONTEND] Stack trace:", error.stack);
+
+              let errorMessage = error.message;
+              if (
+                error.name === "TypeError" &&
+                error.message.includes("fetch")
+              ) {
+                errorMessage =
+                  "Erro de conexão com o servidor. Verifique se o Flask está rodando.";
+              }
+
+              document.getElementById(
+                "chart"
+              ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                 <h3>Erro ao carregar dados</h3>
+                 <p><strong>Mensagem:</strong> ${errorMessage}</p>
+                 <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
+                 <p><small>Verifique o console para mais detalhes</small></p>
+               </div>`;
+            });
+        } else if (analysisType === "production_by_activity_type") {
+          console.log(
+            "🚀 [FRONTEND] Iniciando análise de produção por tipo de atividade"
+          );
+          const startTime = performance.now();
+
+          // Limpar o gráfico e mostrar carregamento
+          document.getElementById("chart").innerHTML =
+            '<div style="text-align: center; padding: 50px;">Carregando dados...</div>';
+
+          console.log(`🌐 [FRONTEND] Fazendo requisição para ${url}`);
+          const requestStart = performance.now();
+
+          fetch(url)
+            .then((response) => {
+              const requestTime = performance.now() - requestStart;
+              console.log(
+                `🌐 [FRONTEND] Resposta recebida em ${requestTime.toFixed(2)}ms`
+              );
+              console.log(
+                `🌐 [FRONTEND] Status: ${response.status} ${response.statusText}`
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
+
+              return response.json();
+            })
+            .then((data) => {
+              const parseTime = performance.now() - requestStart;
+              console.log(
+                `📊 [FRONTEND] JSON parseado em ${parseTime.toFixed(2)}ms`
+              );
+              console.log("📊 [FRONTEND] Dados recebidos:", data);
+
+              // Verificar se há erro na resposta
+              if (data.error) {
+                console.error(
+                  "❌ [FRONTEND] Erro retornado pela API:",
+                  data.error
+                );
+                document.getElementById(
+                  "chart"
+                ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">Erro: ${data.error}</div>`;
+                return;
+              }
+
+              // Verificar se há dados
+              if (!data || data.length === 0) {
+                console.warn(
+                  "⚠️ [FRONTEND] Nenhum dado encontrado na resposta"
+                );
+                document.getElementById("chart").innerHTML =
+                  '<div style="text-align: center; padding: 50px;">Nenhum dado encontrado.</div>';
+                return;
+              }
+
+              console.log(`📈 [FRONTEND] ${data.length} registros encontrados`);
+              console.log(
+                "📈 [FRONTEND] Primeiros registros:",
+                data.slice(0, 3)
+              );
+
+              // Processar dados para barras empilhadas com massa
+              const processStart = performance.now();
+
+              // Obter cores do tema atual
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
+              // Obter todos os períodos únicos e tipos únicos
+              const periodos = [
+                ...new Set(data.map((item) => item.AnoMes)),
+              ].sort();
+              const tipos = [
+                ...new Set(data.map((item) => item["Tipo de atividade"])),
+              ].sort();
+
+              console.log("📊 [FRONTEND] Períodos:", periodos);
+              console.log("📊 [FRONTEND] Tipos de Atividade:", tipos);
+
+              // Calcular totais por período
+              const totaisPorPeriodo = periodos.map((periodo) => {
+                return data
+                  .filter((item) => item.AnoMes === periodo)
+                  .reduce((total, item) => total + item.massa_total, 0);
+              });
+
+              console.log(
+                "📊 [FRONTEND] Totais por período (massa):",
+                totaisPorPeriodo
+              );
+
+              // Criar cores para cada tipo usando padrão Easymine
+              const cores = {
+                "MINA - ESTERIL": themeColors.error,
+                REMANEJO: themeColors.secondary,
+                "ALIMENTAÇÃO ROM": themeColors.accent,
+                "ALIMENTAÇÃO BRITA": themeColors.success,
+                "ALIMENTAÇÃO BLENDAGEM": themeColors.warning,
+              };
+
+              // Criar dados para cada tipo
+              const plotData = tipos.map((tipo) => {
+                const valores = periodos.map((periodo) => {
+                  const registro = data.find(
+                    (item) =>
+                      item.AnoMes === periodo &&
+                      item["Tipo de atividade"] === tipo
+                  );
+                  return registro ? registro.massa_total : 0;
+                });
+
+                return {
+                  x: periodos,
+                  y: valores,
+                  name: tipo,
+                  type: "bar",
+                  marker: {
+                    color:
+                      cores[tipo] ||
+                      (currentTheme === "dark" ? "#7a85a1" : "#95a5a6"),
+                    opacity: 0.8,
+                    line: {
+                      color: themeColors.line,
+                      width: 1,
+                    },
+                  },
+                  text: valores.map((v) =>
+                    v > 0
+                      ? (v / 1000).toLocaleString("pt-BR", {
+                          maximumFractionDigits: 1,
+                        }) + "t"
+                      : ""
+                  ),
+                  textposition: "inside",
+                  textfont: {
+                    size: 9,
+                    color: "#fff",
+                    family: "Arial, sans-serif",
+                  },
+                  hovertemplate:
+                    "<b>%{x}</b><br>" +
+                    "Tipo: " +
+                    tipo +
+                    "<br>" +
+                    "Massa: %{y:,.0f} kg<br>" +
+                    "Massa: %{customdata:,.1f} t<br>" +
+                    "<extra></extra>",
+                  customdata: valores.map((v) => v / 1000), // Para mostrar em toneladas no hover
+                };
+              });
+
+              // Adicionar série de totais (invisible para mostrar só os labels)
+              plotData.push({
+                x: periodos,
+                y: totaisPorPeriodo,
+                type: "scatter",
+                mode: "text",
+                text: totaisPorPeriodo.map(
+                  (v) =>
+                    (v / 1000).toLocaleString("pt-BR", {
+                      maximumFractionDigits: 1,
+                    }) + "t"
+                ),
+                textposition: "top center",
+                textfont: {
+                  size: 11,
+                  color: themeColors.text,
+                  family: "Arial, sans-serif",
+                  weight: "bold",
+                },
+                showlegend: false,
+                hovertemplate:
+                  "<b>%{x}</b><br>Total: %{y:,.0f} kg<br>Total: %{customdata:,.1f} t<extra></extra>",
+                customdata: totaisPorPeriodo.map((v) => v / 1000),
+              });
+
+              const layout = {
+                title: {
+                  text: "Produção por Tipo de Atividade (Massa)",
+                  font: {
+                    size: 20,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                },
+                xaxis: {
+                  title: {
+                    text: "Período (Ano-Mês)",
+                    font: {
+                      size: 14,
+                      color: themeColors.text,
+                    },
+                  },
+                  tickangle: -45,
+                  tickfont: {
+                    size: 11,
+                    color: themeColors.text,
+                  },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                },
+                yaxis: {
+                  title: {
+                    text: "Massa Total (kg)",
+                    font: {
+                      size: 14,
+                      color: themeColors.text,
+                    },
+                  },
+                  tickfont: {
+                    size: 11,
+                    color: themeColors.text,
+                  },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                  zeroline: false,
+                },
+                barmode: "stack",
+                margin: {
+                  l: 80,
+                  r: 150,
+                  t: 100,
+                  b: 120,
+                },
+                height: 500,
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
+                bargap: 0.3,
+                legend: {
+                  x: 1.02,
+                  y: 0.5,
+                  xanchor: "left",
+                  yanchor: "middle",
+                  bgcolor:
+                    currentTheme === "dark"
+                      ? "rgba(35, 35, 51, 0.9)"
+                      : "rgba(255,255,255,0.9)",
+                  bordercolor: themeColors.line,
+                  borderwidth: 1,
+                  font: {
+                    size: 12,
+                    color: themeColors.text,
+                  },
+                },
+              };
+
+              const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ["pan2d", "lasso2d"],
+              };
+
+              console.log(
+                "📊 [FRONTEND] Criando gráfico de produção empilhado com Plotly..."
+              );
+              const plotStart = performance.now();
+
+              Plotly.newPlot("chart", plotData, layout, config).then(() => {
+                const plotTime = performance.now() - plotStart;
+                const totalTime = performance.now() - startTime;
+                console.log(
+                  `✅ [FRONTEND] Gráfico de produção criado em ${plotTime.toFixed(
                     2
                   )}ms`
                 );
