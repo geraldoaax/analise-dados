@@ -502,7 +502,7 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
     
     # Converter para toneladas e calcular métricas principais
     productivity_metrics['toneladas_total'] = (productivity_metrics['massa_total_kg'] / 1000).round(2)
-    productivity_metrics['toneladas_por_ciclo'] = (productivity_metrics['massa_media_kg_ciclo'] / 1000).round(3)
+    productivity_metrics['toneladas_por_ciclo'] = (productivity_metrics['massa_media_kg_ciclo']).round(2)  # Manter em kg para mostrar valores maiores
     
     # Calcular crescimento em toneladas
     productivity_metrics['crescimento_toneladas_pct'] = productivity_metrics['toneladas_total'].pct_change() * 100
@@ -531,6 +531,118 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
     process_time = time.time() - process_start
     logger.info(f"✅ Análise de produtividade simplificada concluída em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} períodos analisados")
+    
+    return result
+
+def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None):
+    """Obtém análise de produtividade por equipamento de carga: toneladas/hora por Tag carga"""
+    logger.info("🔄 Processando análise de produtividade por equipamento de carga com filtro de data...")
+    process_start = time.time()
+    
+    # Carregar dados brutos
+    df = load_data_with_cache()
+    
+    # Verificar se as colunas existem
+    if 'DataHoraInicio' not in df.columns:
+        raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
+    if 'Massa' not in df.columns:
+        raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tag carga' not in df.columns:
+        raise ValueError('Coluna Tag carga não encontrada nos dados')
+    
+    # Processar dados de forma otimizada
+    logger.info("🔄 Convertendo datas...")
+    df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
+    
+    # Remover datas inválidas e valores nulos
+    df = df.dropna(subset=['DataHoraInicio', 'Massa', 'Tag carga'])
+    
+    # Filtrar apenas registros com Tag carga válida (não '-' ou vazio)
+    df = df[df['Tag carga'] != '-']
+    df = df[df['Tag carga'].str.strip() != '']
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
+    
+    logger.info("📅 Criando períodos mensais...")
+    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    
+    logger.info("🚛 Calculando produtividade por equipamento de carga...")
+    
+    # Calcular horas operacionais por equipamento (Tag carga) por mês
+    # Agrupamos por AnoMes, Tag carga, e hora para contar horas únicas de operação
+    df['DataHora'] = df['DataHoraInicio'].dt.floor('h')  # Agrupar por hora (usando 'h' novo padrão)
+    
+    # Para cada equipamento e mês, calcular:
+    # 1. Total de massa transportada
+    # 2. Horas operacionais únicas
+    # 3. Toneladas por hora
+    
+    equipment_productivity = []
+    
+    for periodo in df['AnoMes'].unique():
+        periodo_data = df[df['AnoMes'] == periodo]
+        
+        for equipamento in periodo_data['Tag carga'].unique():
+            eq_data = periodo_data[periodo_data['Tag carga'] == equipamento]
+            
+            # Calcular métricas
+            total_massa_kg = eq_data['Massa'].sum()
+            total_toneladas = total_massa_kg / 1000
+            total_ciclos = len(eq_data)
+            
+            # Calcular horas operacionais únicas
+            horas_operacionais = len(eq_data['DataHora'].unique())
+            
+            # Calcular toneladas por hora (se houve operação)
+            if horas_operacionais > 0:
+                toneladas_por_hora = total_toneladas / horas_operacionais
+            else:
+                toneladas_por_hora = 0
+            
+            equipment_productivity.append({
+                'AnoMes': str(periodo),
+                'Equipamento': equipamento,
+                'total_toneladas': round(total_toneladas, 2),
+                'horas_operacionais': horas_operacionais,
+                'toneladas_por_hora': round(toneladas_por_hora, 2),
+                'total_ciclos': total_ciclos,
+                'ciclos_por_hora': round(total_ciclos / horas_operacionais if horas_operacionais > 0 else 0, 1)
+            })
+    
+    # Converter para DataFrame para facilitar ordenação
+    result_df = pd.DataFrame(equipment_productivity)
+    result_df = result_df.sort_values(['AnoMes', 'Equipamento'])
+    
+    # Log das métricas calculadas
+    logger.info("🚛 Métricas de produtividade por equipamento de carga:")
+    for _, row in result_df.head(10).iterrows():
+        logger.info(f"   📅 {row['AnoMes']} - {row['Equipamento']}: "
+                   f"{row['toneladas_por_hora']:.2f} t/h, "
+                   f"{row['total_toneladas']:.1f} t total, "
+                   f"{row['horas_operacionais']} horas op.")
+    
+    # Converter para dict para JSON
+    result = result_df.to_dict(orient='records')
+    
+    process_time = time.time() - process_start
+    logger.info(f"✅ Análise de produtividade por equipamento de carga concluída em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} registros de equipamento/período analisados")
     
     return result
 
@@ -758,6 +870,44 @@ def productivity_analysis():
     except Exception as e:
         error_time = time.time() - api_start_time
         logger.error(f"❌ Erro na API productivity_analysis após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
+
+@app.route('/api/productivity_by_equipment')
+def productivity_by_equipment():
+    logger.info("🚀 API productivity_by_equipment (Tag carga) chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        
+        # Usar função com filtros de data
+        result = get_processed_productivity_by_equipment(data_inicio, data_fim)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API productivity_by_equipment (Tag carga) concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros equipamento/período")
+        
+        # Log dos primeiros registros para debug
+        if result:
+            logger.info("📋 Primeiros registros de produtividade por equipamento de carga:")
+            for i, record in enumerate(result[:5]):
+                logger.info(f"   {i+1}. {record['AnoMes']} - {record['Equipamento']}: "
+                           f"{record['toneladas_por_hora']:.2f} t/h, "
+                           f"{record['total_toneladas']:.1f} t total")
+            if len(result) > 5:
+                logger.info(f"   ... e mais {len(result) - 5} registros")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API productivity_by_equipment após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 

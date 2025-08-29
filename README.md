@@ -13,6 +13,7 @@ Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos
   - Produção por especificação de material (soma de massa)
   - Produção por material (soma de massa)
   - **🚛 Produtividade (Toneladas)** (total de toneladas por período e produtividade por ciclo)
+  - **⚙️ Produtividade por Equipamento de Carga** (toneladas/hora por Tag carga)
 - Estrutura modular para fácil adição de novas análises e tipos de gráficos.
 
 ## Pré-requisitos
@@ -121,6 +122,13 @@ Para adicionar novas análises, siga os passos:
 - **Produção por Material**: Soma de massa por material (top 3 materiais + "Outros")
 - **🚛 Produtividade (Toneladas)**:
   - Total de toneladas transportadas por período
-  - Produtividade por ciclo (toneladas/ciclo)
+  - Produtividade por ciclo (kg/ciclo)
   - Visualização simples e clara com dois eixos
   - Foco na métrica principal: toneladas
+- **⚙️ Produtividade por Equipamento de Carga**:
+  - Toneladas por hora por equipamento (baseado na Tag carga)
+  - Comparação de eficiência entre diferentes equipamentos (EH-4031, EH-5018, etc.)
+  - Análise temporal da performance individual de cada equipamento
+  - Identificação de equipamentos mais/menos produtivos
+  - Cálculo baseado em horas operacionais reais por equipamento
+  - Filtros automáticos para Tags de carga válidas (exclui "-" e vazios)

@@ -468,6 +468,11 @@
               >🚛 Produtividade (Toneladas)</a
             >
           </li>
+          <li>
+            <a href="#" onclick="selecionarAnalise('productivity_by_equipment')"
+              >⚙️ Produtividade por Equipamento de Carga</a
+            >
+          </li>
           <!-- Add more menu items here -->
         </ul>
       </div>
@@ -580,6 +585,10 @@
         } else if (tipo === "productivity_analysis") {
           menuLinks[5].classList.add("active");
           chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
+        } else if (tipo === "productivity_by_equipment") {
+          menuLinks[6].classList.add("active");
+          chartTitleText.textContent =
+            "⚙️ Produtividade por Equipamento de Carga";
         }
 
         // Salvar tipo selecionado
@@ -2277,7 +2286,7 @@
               console.log("📊 [FRONTEND] Valores X:", x_values);
               console.log("📊 [FRONTEND] Toneladas Total:", toneladas_total);
               console.log(
-                "📊 [FRONTEND] Toneladas/Ciclo:",
+                "📊 [FRONTEND] Produtividade (kg/ciclo):",
                 toneladas_por_ciclo
               );
 
@@ -2305,12 +2314,12 @@
                 y: toneladas_por_ciclo,
                 type: "scatter",
                 mode: "lines+markers",
-                name: "Produtividade (t/ciclo)",
+                name: "Produtividade (kg/ciclo)",
                 line: { color: themeColors.accent, width: 4 },
                 marker: { size: 10, color: themeColors.accent },
                 yaxis: "y2",
                 hovertemplate:
-                  "<b>%{x}</b><br>Produtividade: %{y:.3f} t/ciclo<extra></extra>",
+                  "<b>%{x}</b><br>Produtividade: %{y:.0f} kg/ciclo<extra></extra>",
               };
 
               const layout = {
@@ -2343,7 +2352,7 @@
                 },
                 yaxis2: {
                   title: {
-                    text: "Produtividade (toneladas/ciclo)",
+                    text: "Produtividade (kg/ciclo)",
                     font: { size: 14, color: themeColors.accent },
                   },
                   overlaying: "y",
@@ -2420,6 +2429,233 @@
                 "chart"
               ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
                  <h3>Erro ao carregar dados de produtividade</h3>
+                 <p><strong>Mensagem:</strong> ${errorMessage}</p>
+                 <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
+                 <p><small>Verifique o console para mais detalhes</small></p>
+               </div>`;
+            });
+        } else if (analysisType === "productivity_by_equipment") {
+          console.log(
+            "🚀 [FRONTEND] Iniciando análise de produtividade por equipamento"
+          );
+          const startTime = performance.now();
+
+          // Limpar o gráfico e mostrar carregamento
+          document.getElementById("chart").innerHTML =
+            '<div style="text-align: center; padding: 50px;">Carregando dados de produtividade por equipamento de carga...</div>';
+
+          console.log(`🌐 [FRONTEND] Fazendo requisição para ${url}`);
+          const requestStart = performance.now();
+
+          fetch(url)
+            .then((response) => {
+              const requestTime = performance.now() - requestStart;
+              console.log(
+                `🌐 [FRONTEND] Resposta recebida em ${requestTime.toFixed(2)}ms`
+              );
+              console.log(
+                `🌐 [FRONTEND] Status: ${response.status} ${response.statusText}`
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP ${response.status}: ${response.statusText}`
+                );
+              }
+
+              return response.json();
+            })
+            .then((data) => {
+              const parseTime = performance.now() - requestStart;
+              console.log(
+                `📊 [FRONTEND] JSON parseado em ${parseTime.toFixed(2)}ms`
+              );
+              console.log("📊 [FRONTEND] Dados recebidos:", data);
+
+              // Verificar se há erro na resposta
+              if (data.error) {
+                console.error(
+                  "❌ [FRONTEND] Erro retornado pela API:",
+                  data.error
+                );
+                document.getElementById(
+                  "chart"
+                ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">Erro: ${data.error}</div>`;
+                return;
+              }
+
+              // Verificar se há dados
+              if (!data || data.length === 0) {
+                console.warn(
+                  "⚠️ [FRONTEND] Nenhum dado encontrado na resposta"
+                );
+                document.getElementById("chart").innerHTML =
+                  '<div style="text-align: center; padding: 50px;">Nenhum dado encontrado.</div>';
+                return;
+              }
+
+              console.log(
+                `📈 [FRONTEND] ${data.length} registros de equipamento de carga encontrados`
+              );
+              console.log(
+                "📈 [FRONTEND] Primeiros registros:",
+                data.slice(0, 3)
+              );
+
+              // Processar dados para múltiplas linhas (uma por equipamento de carga)
+              const equipamentos = [
+                ...new Set(data.map((item) => item.Equipamento)),
+              ];
+              const periodos = [
+                ...new Set(data.map((item) => item.AnoMes)),
+              ].sort();
+
+              console.log(
+                "🚛 [FRONTEND] Equipamentos de carga encontrados:",
+                equipamentos
+              );
+              console.log("📅 [FRONTEND] Períodos:", periodos);
+
+              const processStart = performance.now();
+
+              // Obter cores do tema atual
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
+              // Cores para diferentes equipamentos
+              const colors = [
+                themeColors.accent,
+                themeColors.secondary,
+                themeColors.success,
+                themeColors.warning,
+                themeColors.error,
+                "#8884d8",
+                "#82ca9d",
+                "#ffc658",
+                "#ff7c7c",
+                "#8dd1e1",
+              ];
+
+              // Criar traces (uma linha para cada equipamento)
+              const traces = equipamentos.map((equipamento, index) => {
+                const equipData = data.filter(
+                  (item) => item.Equipamento === equipamento
+                );
+
+                // Organizar dados por período
+                const equipPorPeriodo = {};
+                equipData.forEach((item) => {
+                  equipPorPeriodo[item.AnoMes] = item.toneladas_por_hora;
+                });
+
+                const y_values = periodos.map(
+                  (periodo) => equipPorPeriodo[periodo] || 0
+                );
+
+                return {
+                  x: periodos,
+                  y: y_values,
+                  type: "scatter",
+                  mode: "lines+markers",
+                  name: equipamento,
+                  line: { color: colors[index % colors.length], width: 3 },
+                  marker: { size: 8, color: colors[index % colors.length] },
+                  hovertemplate: `<b>${equipamento}</b><br>%{x}<br>Produtividade: %{y:.2f} t/h<extra></extra>`,
+                };
+              });
+
+              const layout = {
+                title: {
+                  text: "⚙️ Produtividade por Equipamento de Carga (Toneladas/Hora)",
+                  font: {
+                    size: 20,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                },
+                xaxis: {
+                  title: {
+                    text: "Período (Ano-Mês)",
+                    font: { size: 14, color: themeColors.text },
+                  },
+                  tickfont: { size: 12, color: themeColors.text },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                },
+                yaxis: {
+                  title: {
+                    text: "Produtividade (toneladas/hora)",
+                    font: { size: 14, color: themeColors.text },
+                  },
+                  tickfont: { size: 12, color: themeColors.text },
+                  gridcolor: themeColors.grid,
+                  linecolor: themeColors.line,
+                },
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
+                font: { color: themeColors.text },
+                legend: {
+                  orientation: "v",
+                  x: 1.02,
+                  y: 1,
+                  font: { size: 11, color: themeColors.text },
+                },
+                margin: { l: 80, r: 150, t: 80, b: 80 },
+                hovermode: "x unified",
+              };
+
+              const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: [
+                  "select2d",
+                  "lasso2d",
+                  "autoScale2d",
+                  "hoverCompareCartesian",
+                ],
+                displaylogo: false,
+              };
+
+              console.log(
+                "📊 [FRONTEND] Criando gráfico de produtividade por equipamento de carga com Plotly..."
+              );
+              const plotStart = performance.now();
+
+              Plotly.newPlot("chart", traces, layout, config).then(() => {
+                const plotTime = performance.now() - plotStart;
+                const totalTime = performance.now() - startTime;
+                console.log(
+                  `✅ [FRONTEND] Gráfico de produtividade por equipamento de carga criado em ${plotTime.toFixed(
+                    2
+                  )}ms`
+                );
+                console.log(
+                  `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+              });
+            })
+            .catch((error) => {
+              const errorTime = performance.now() - startTime;
+              console.error(
+                `❌ [FRONTEND] Erro após ${errorTime.toFixed(2)}ms:`,
+                error
+              );
+              console.error("❌ [FRONTEND] Stack trace:", error.stack);
+
+              let errorMessage = error.message;
+              if (
+                error.name === "TypeError" &&
+                error.message.includes("fetch")
+              ) {
+                errorMessage =
+                  "Erro de conexão com o servidor. Verifique se o Flask está rodando.";
+              }
+
+              document.getElementById(
+                "chart"
+              ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                 <h3>Erro ao carregar dados de produtividade por equipamento de carga</h3>
                  <p><strong>Mensagem:</strong> ${errorMessage}</p>
                  <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
                  <p><small>Verifique o console para mais detalhes</small></p>
