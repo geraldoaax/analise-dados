@@ -26,6 +26,9 @@ def get_files_hash():
     path = 'CicloDetalhado'
     all_files = glob.glob(path + "/*.xlsx")
     
+    # Filtrar arquivos temporários do Excel (que começam com ~$)
+    all_files = [f for f in all_files if not os.path.basename(f).startswith('~$')]
+    
     files_info = []
     for filename in all_files:
         stat = os.stat(filename)
@@ -51,8 +54,21 @@ def load_data_with_cache():
     start_time = time.time()
     
     path = 'CicloDetalhado'
-    all_files = glob.glob(path + "/*.xlsx")
-    logger.info(f"📁 Encontrados {len(all_files)} arquivos Excel")
+    all_files_raw = glob.glob(path + "/*.xlsx")
+    
+    # Filtrar arquivos temporários do Excel (que começam com ~$)
+    temp_files = [f for f in all_files_raw if os.path.basename(f).startswith('~$')]
+    all_files = [f for f in all_files_raw if not os.path.basename(f).startswith('~$')]
+    
+    if temp_files:
+        logger.info(f"🗑️  Ignorando {len(temp_files)} arquivo(s) temporário(s) do Excel: {[os.path.basename(f) for f in temp_files]}")
+    
+    logger.info(f"📁 Encontrados {len(all_files)} arquivos Excel válidos")
+    
+    # Verificar se há arquivos válidos para processar
+    if not all_files:
+        logger.error("❌ Nenhum arquivo Excel válido encontrado para processar")
+        raise ValueError("Nenhum arquivo Excel válido encontrado na pasta CicloDetalhado")
     
     df_list = []
     total_rows = 0
@@ -62,8 +78,8 @@ def load_data_with_cache():
         file_start = time.time()
         
         try:
-            # Carregar as colunas necessárias (incluindo Massa, Tipo de atividade, Especificacao de material e Material)
-            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material', 'Material'])
+            # Carregar as colunas necessárias (incluindo Tag carga para produtividade por equipamento)
+            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material', 'Material', 'Tag carga'])
             rows = len(df)
             total_rows += rows
             df_list.append(df)
@@ -251,17 +267,48 @@ def get_processed_production_by_activity_type(data_inicio=None, data_fim=None):
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
     
     logger.info("📊 Agrupando dados por tipo de atividade e somando massa...")
-    production_data = df.groupby(['AnoMes', 'Tipo de atividade'])['Massa'].sum().reset_index(name='massa_total')
+    # Primeiro, calcular totais por tipo de atividade para identificar os maiores
+    totals_by_activity = df.groupby('Tipo de atividade')['Massa'].sum().sort_values(ascending=False)
+    logger.info(f"📋 Tipos de atividade encontrados: {len(totals_by_activity)}")
+    
+    # Definir quantos tipos de atividade mostrar individualmente (top 2)
+    top_n = 2
+    top_activities = totals_by_activity.head(top_n).index.tolist()
+    logger.info(f"🔝 Top {top_n} tipos de atividade: {top_activities}")
+    
+    # Log detalhado dos tipos de atividade e suas massas
+    for i, (activity, massa) in enumerate(totals_by_activity.head(10).items(), 1):
+        status = "🏆 TOP" if activity in top_activities else "📦 OUTROS"
+        logger.info(f"   {i:2d}. {activity}: {massa:,.0f} kg - {status}")
+    
+    # Criar nova coluna agrupando tipos de atividade menores em "Outros"
+    df['Activity_Agrupada'] = df['Tipo de atividade'].apply(
+        lambda x: x if x in top_activities else 'Outros'
+    )
+    
+    # Agrupar por período e tipo de atividade agrupada
+    production_data = df.groupby(['AnoMes', 'Activity_Agrupada'])['Massa'].sum().reset_index(name='massa_total')
+    
+    # Renomear coluna para manter compatibilidade com frontend
+    production_data = production_data.rename(columns={'Activity_Agrupada': 'Tipo de atividade'})
     
     # Converter período para string e ordenar
     production_data['AnoMes'] = production_data['AnoMes'].astype(str)
     production_data = production_data.sort_values(['AnoMes', 'Tipo de atividade'])
     
+    # Log do agrupamento realizado
+    activities_finais = production_data['Tipo de atividade'].unique()
+    tem_outros = 'Outros' in activities_finais
+    logger.info(f"📋 Tipos de atividade no resultado final: {list(activities_finais)}")
+    if tem_outros:
+        outros_total = production_data[production_data['Tipo de atividade'] == 'Outros']['massa_total'].sum()
+        logger.info(f"📦 Total agrupado em 'Outros': {outros_total:,.2f} kg")
+    
     # Converter para dict para JSON
     result = production_data.to_dict(orient='records')
     
     process_time = time.time() - process_start
-    logger.info(f"✅ Processamento de produção concluído em {process_time:.2f}s")
+    logger.info(f"✅ Processamento de produção por tipo de atividade concluído em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} registros encontrados")
     
     return result
@@ -579,60 +626,58 @@ def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None):
         logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
         return []
     
-    logger.info("📅 Criando períodos mensais...")
-    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    logger.info("📅 Criando períodos DIÁRIOS...")
+    df['Data'] = df['DataHoraInicio'].dt.date
     
-    logger.info("🚛 Calculando produtividade por equipamento de carga...")
+    logger.info("🚛 Calculando produtividade DIÁRIA por equipamento de carga...")
     
-    # Calcular horas operacionais por equipamento (Tag carga) por mês
-    # Agrupamos por AnoMes, Tag carga, e hora para contar horas únicas de operação
-    df['DataHora'] = df['DataHoraInicio'].dt.floor('h')  # Agrupar por hora (usando 'h' novo padrão)
+    # Calcular horas operacionais por equipamento (Tag carga) por DIA
+    # Agrupamos por Data, Tag carga, e hora para contar horas únicas de operação
+    df['DataHora'] = df['DataHoraInicio'].dt.floor('h')  # Agrupar por hora
     
-    # Para cada equipamento e mês, calcular:
-    # 1. Total de massa transportada
-    # 2. Horas operacionais únicas
+    # Para cada equipamento e DIA, calcular:
+    # 1. Total de massa transportada no dia
+    # 2. Horas operacionais únicas no dia
     # 3. Toneladas por hora
     
     equipment_productivity = []
     
-    for periodo in df['AnoMes'].unique():
-        periodo_data = df[df['AnoMes'] == periodo]
+    # Agrupar por Data e Tag carga
+    grouped = df.groupby(['Data', 'Tag carga'])
+    
+    for (data, equipamento), eq_data in grouped:
+        # Calcular métricas do dia
+        total_massa_kg = eq_data['Massa'].sum()
+        total_toneladas = total_massa_kg / 1000
+        total_ciclos = len(eq_data)
         
-        for equipamento in periodo_data['Tag carga'].unique():
-            eq_data = periodo_data[periodo_data['Tag carga'] == equipamento]
-            
-            # Calcular métricas
-            total_massa_kg = eq_data['Massa'].sum()
-            total_toneladas = total_massa_kg / 1000
-            total_ciclos = len(eq_data)
-            
-            # Calcular horas operacionais únicas
-            horas_operacionais = len(eq_data['DataHora'].unique())
-            
-            # Calcular toneladas por hora (se houve operação)
-            if horas_operacionais > 0:
-                toneladas_por_hora = total_toneladas / horas_operacionais
-            else:
-                toneladas_por_hora = 0
-            
-            equipment_productivity.append({
-                'AnoMes': str(periodo),
-                'Equipamento': equipamento,
-                'total_toneladas': round(total_toneladas, 2),
-                'horas_operacionais': horas_operacionais,
-                'toneladas_por_hora': round(toneladas_por_hora, 2),
-                'total_ciclos': total_ciclos,
-                'ciclos_por_hora': round(total_ciclos / horas_operacionais if horas_operacionais > 0 else 0, 1)
-            })
+        # Calcular horas operacionais únicas no dia
+        horas_operacionais = len(eq_data['DataHora'].unique())
+        
+        # Calcular toneladas por hora (se houve operação)
+        if horas_operacionais > 0:
+            toneladas_por_hora = total_toneladas / horas_operacionais
+        else:
+            toneladas_por_hora = 0
+        
+        equipment_productivity.append({
+            'Data': str(data),
+            'Equipamento': equipamento,
+            'total_toneladas': round(total_toneladas, 2),
+            'horas_operacionais': horas_operacionais,
+            'toneladas_por_hora': round(toneladas_por_hora, 2),
+            'total_ciclos': total_ciclos,
+            'ciclos_por_hora': round(total_ciclos / horas_operacionais if horas_operacionais > 0 else 0, 1)
+        })
     
     # Converter para DataFrame para facilitar ordenação
     result_df = pd.DataFrame(equipment_productivity)
-    result_df = result_df.sort_values(['AnoMes', 'Equipamento'])
+    result_df = result_df.sort_values(['Data', 'Equipamento'])
     
     # Log das métricas calculadas
-    logger.info("🚛 Métricas de produtividade por equipamento de carga:")
+    logger.info("🚛 Métricas de produtividade DIÁRIA por equipamento de carga:")
     for _, row in result_df.head(10).iterrows():
-        logger.info(f"   📅 {row['AnoMes']} - {row['Equipamento']}: "
+        logger.info(f"   📅 {row['Data']} - {row['Equipamento']}: "
                    f"{row['toneladas_por_hora']:.2f} t/h, "
                    f"{row['total_toneladas']:.1f} t total, "
                    f"{row['horas_operacionais']} horas op.")
@@ -641,8 +686,8 @@ def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None):
     result = result_df.to_dict(orient='records')
     
     process_time = time.time() - process_start
-    logger.info(f"✅ Análise de produtividade por equipamento de carga concluída em {process_time:.2f}s")
-    logger.info(f"📊 {len(result)} registros de equipamento/período analisados")
+    logger.info(f"✅ Análise de produtividade DIÁRIA por equipamento de carga concluída em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} registros de equipamento/dia analisados")
     
     return result
 
@@ -889,15 +934,15 @@ def productivity_by_equipment():
         result = get_processed_productivity_by_equipment(data_inicio, data_fim)
         
         total_api_time = time.time() - api_start_time
-        logger.info(f"✅ API productivity_by_equipment (Tag carga) concluída com sucesso!")
+        logger.info(f"✅ API productivity_by_equipment (Tag carga DIÁRIA) concluída com sucesso!")
         logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
-        logger.info(f"📊 Dados retornados: {len(result)} registros equipamento/período")
+        logger.info(f"📊 Dados retornados: {len(result)} registros equipamento/dia")
         
         # Log dos primeiros registros para debug
         if result:
-            logger.info("📋 Primeiros registros de produtividade por equipamento de carga:")
+            logger.info("📋 Primeiros registros de produtividade DIÁRIA por equipamento de carga:")
             for i, record in enumerate(result[:5]):
-                logger.info(f"   {i+1}. {record['AnoMes']} - {record['Equipamento']}: "
+                logger.info(f"   {i+1}. {record['Data']} - {record['Equipamento']}: "
                            f"{record['toneladas_por_hora']:.2f} t/h, "
                            f"{record['total_toneladas']:.1f} t total")
             if len(result) > 5:
@@ -933,7 +978,8 @@ def clear_cache():
         'message': 'Cache limpo com sucesso',
         'had_raw_data': had_data,
         'had_processed_data': had_processed,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': datetime.now().isoformat(),
+        'info': 'Cache limpo - próxima requisição irá recarregar todos os dados'
     })
 
 if __name__ == '__main__':

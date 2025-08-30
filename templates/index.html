@@ -470,7 +470,7 @@
           </li>
           <li>
             <a href="#" onclick="selecionarAnalise('productivity_by_equipment')"
-              >⚙️ Produtividade por Equipamento de Carga</a
+              >⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)</a
             >
           </li>
           <!-- Add more menu items here -->
@@ -588,7 +588,7 @@
         } else if (tipo === "productivity_by_equipment") {
           menuLinks[6].classList.add("active");
           chartTitleText.textContent =
-            "⚙️ Produtividade por Equipamento de Carga";
+            "⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)";
         }
 
         // Salvar tipo selecionado
@@ -1321,12 +1321,17 @@
               const periodos = [
                 ...new Set(data.map((item) => item.AnoMes)),
               ].sort();
-              const tipos = [
+
+              // Ordenar tipos com "Outros" sempre por último
+              const tiposTemp = [
                 ...new Set(data.map((item) => item["Tipo de atividade"])),
               ].sort();
+              const tiposOrdenados = tiposTemp
+                .filter((t) => t !== "Outros")
+                .concat(tiposTemp.includes("Outros") ? ["Outros"] : []);
 
               console.log("📊 [FRONTEND] Períodos:", periodos);
-              console.log("📊 [FRONTEND] Tipos de Atividade:", tipos);
+              console.log("📊 [FRONTEND] Tipos de Atividade:", tiposOrdenados);
 
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
@@ -1340,17 +1345,49 @@
                 totaisPorPeriodo
               );
 
-              // Criar cores para cada tipo usando padrão Easymine
-              const cores = {
-                "MINA - ESTERIL": themeColors.error,
-                REMANEJO: themeColors.secondary,
-                "ALIMENTAÇÃO ROM": themeColors.accent,
-                "ALIMENTAÇÃO BRITA": themeColors.success,
-                "ALIMENTAÇÃO BLENDAGEM": themeColors.warning,
-              };
+              // Paleta de cores bem contrastantes para tipos de atividade
+              const paletaCoresActivity = [
+                themeColors.accent, // 1º: Amarelo Easymine (#ffcc29)
+                themeColors.secondary, // 2º: Azul claro (#44d1dd) - bem diferente do amarelo
+                themeColors.error, // 3º: Vermelho (#f04134) - contraste forte com azul
+                themeColors.success, // 4º: Verde (#00a854)
+                "#9c27b0", // 5º: Roxo - contraste com verde
+                themeColors.warning, // 6º: Laranja (#ffbf00)
+                "#e91e63", // 7º: Rosa
+                "#00bcd4", // 8º: Ciano
+                "#ff5722", // 9º: Laranja profundo
+                "#795548", // 10º: Marrom
+                "#607d8b", // 11º: Azul acinzentado
+                "#3f51b5", // 12º: Índigo
+              ];
+
+              // Função para gerar cores automaticamente para tipos de atividade
+              // A paleta foi organizada para máximo contraste entre as primeiras cores:
+              // 1º Amarelo → 2º Azul → 3º Vermelho (cores bem distintas)
+              function getCorTipoAtividade(tipoAtividade, index) {
+                if (tipoAtividade === "Outros") {
+                  return currentTheme === "dark" ? "#7a85a1" : "#95a5a6"; // Cor neutra para "Outros"
+                }
+                // Usar índice para atribuir cor da paleta com máximo contraste
+                return paletaCoresActivity[index % paletaCoresActivity.length];
+              }
+
+              // Criar mapa de cores dinâmico
+              const cores = {};
+              tiposOrdenados.forEach((tipoAtividade, index) => {
+                cores[tipoAtividade] = getCorTipoAtividade(
+                  tipoAtividade,
+                  index
+                );
+                console.log(
+                  `🎨 [CORES] ${index + 1}º. "${tipoAtividade}" → ${
+                    cores[tipoAtividade]
+                  }`
+                );
+              });
 
               // Criar dados para cada tipo
-              const plotData = tipos.map((tipo) => {
+              const plotData = tiposOrdenados.map((tipo) => {
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
@@ -2502,19 +2539,17 @@
                 data.slice(0, 3)
               );
 
-              // Processar dados para múltiplas linhas (uma por equipamento de carga)
+              // Processar dados para colunas empilhadas (uma por equipamento de carga)
               const equipamentos = [
                 ...new Set(data.map((item) => item.Equipamento)),
               ];
-              const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
-              ].sort();
+              const datas = [...new Set(data.map((item) => item.Data))].sort();
 
               console.log(
                 "🚛 [FRONTEND] Equipamentos de carga encontrados:",
                 equipamentos
               );
-              console.log("📅 [FRONTEND] Períodos:", periodos);
+              console.log("📅 [FRONTEND] Datas (diárias):", datas);
 
               const processStart = performance.now();
 
@@ -2537,46 +2572,49 @@
                 "#8dd1e1",
               ];
 
-              // Criar traces (uma linha para cada equipamento)
+              // Criar traces (uma barra para cada equipamento)
               const traces = equipamentos.map((equipamento, index) => {
                 const equipData = data.filter(
                   (item) => item.Equipamento === equipamento
                 );
 
-                // Organizar dados por período
-                const equipPorPeriodo = {};
+                // Organizar dados por data
+                const equipPorData = {};
                 equipData.forEach((item) => {
-                  equipPorPeriodo[item.AnoMes] = item.toneladas_por_hora;
+                  equipPorData[item.Data] = item.toneladas_por_hora;
                 });
 
-                const y_values = periodos.map(
-                  (periodo) => equipPorPeriodo[periodo] || 0
-                );
+                const y_values = datas.map((data) => equipPorData[data] || 0);
 
                 return {
-                  x: periodos,
+                  x: datas,
                   y: y_values,
-                  type: "scatter",
-                  mode: "lines+markers",
+                  type: "bar",
                   name: equipamento,
-                  line: { color: colors[index % colors.length], width: 3 },
-                  marker: { size: 8, color: colors[index % colors.length] },
+                  marker: {
+                    color: colors[index % colors.length],
+                    line: {
+                      color: colors[index % colors.length],
+                      width: 1,
+                    },
+                  },
                   hovertemplate: `<b>${equipamento}</b><br>%{x}<br>Produtividade: %{y:.2f} t/h<extra></extra>`,
                 };
               });
 
               const layout = {
                 title: {
-                  text: "⚙️ Produtividade por Equipamento de Carga (Toneladas/Hora)",
+                  text: "⚙️ Produtividade DIÁRIA por Equipamento de Carga - Colunas Empilhadas (Toneladas/Hora)",
                   font: {
                     size: 20,
                     color: themeColors.text,
                     family: "Arial, sans-serif",
                   },
                 },
+                barmode: "stack",
                 xaxis: {
                   title: {
-                    text: "Período (Ano-Mês)",
+                    text: "Data (Diária)",
                     font: { size: 14, color: themeColors.text },
                   },
                   tickfont: { size: 12, color: themeColors.text },
@@ -2585,7 +2623,7 @@
                 },
                 yaxis: {
                   title: {
-                    text: "Produtividade (toneladas/hora)",
+                    text: "Produtividade Total Empilhada (toneladas/hora)",
                     font: { size: 14, color: themeColors.text },
                   },
                   tickfont: { size: 12, color: themeColors.text },
@@ -2618,7 +2656,7 @@
               };
 
               console.log(
-                "📊 [FRONTEND] Criando gráfico de produtividade por equipamento de carga com Plotly..."
+                "📊 [FRONTEND] Criando gráfico de produtividade por equipamento de carga (colunas empilhadas) com Plotly..."
               );
               const plotStart = performance.now();
 
@@ -2626,7 +2664,7 @@
                 const plotTime = performance.now() - plotStart;
                 const totalTime = performance.now() - startTime;
                 console.log(
-                  `✅ [FRONTEND] Gráfico de produtividade por equipamento de carga criado em ${plotTime.toFixed(
+                  `✅ [FRONTEND] Gráfico de produtividade por equipamento de carga (colunas empilhadas) criado em ${plotTime.toFixed(
                     2
                   )}ms`
                 );
@@ -2655,7 +2693,7 @@
               document.getElementById(
                 "chart"
               ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
-                 <h3>Erro ao carregar dados de produtividade por equipamento de carga</h3>
+                 <h3>Erro ao carregar dados de produtividade por equipamento de carga (colunas empilhadas)</h3>
                  <p><strong>Mensagem:</strong> ${errorMessage}</p>
                  <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
                  <p><small>Verifique o console para mais detalhes</small></p>

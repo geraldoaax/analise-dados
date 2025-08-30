@@ -13,7 +13,7 @@ Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos
   - Produção por especificação de material (soma de massa)
   - Produção por material (soma de massa)
   - **🚛 Produtividade (Toneladas)** (total de toneladas por período e produtividade por ciclo)
-  - **⚙️ Produtividade por Equipamento de Carga** (toneladas/hora por Tag carga)
+  - **⚙️ Produtividade por Equipamento de Carga** (toneladas/hora por Tag carga - Colunas Empilhadas)
 - Estrutura modular para fácil adição de novas análises e tipos de gráficos.
 
 ## Pré-requisitos
@@ -59,7 +59,11 @@ pip install -r requirements.txt
 
 ### 4. Preparar os Dados
 
-Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta `CicloDetalhado/` dentro do diretório raiz do projeto. O script espera que cada arquivo Excel contenha as seguintes colunas:
+Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta `CicloDetalhado/` dentro do diretório raiz do projeto.
+
+**Nota:** O sistema ignora automaticamente arquivos temporários do Excel (que começam com `~$`) para evitar erros quando arquivos estão abertos.
+
+O script espera que cada arquivo Excel contenha as seguintes colunas:
 
 - `DataHoraInicio`: Data e hora de início do ciclo
 - `Tipo Input`: Tipo do input do ciclo
@@ -67,6 +71,7 @@ Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta 
 - `Tipo de atividade`: Tipo da atividade realizada
 - `Especificacao de material`: Especificação do material transportado
 - `Material`: Material transportado
+- `Tag carga`: Identificação do equipamento de carga (para relatório de produtividade)
 
 ### 5. Executar a Aplicação
 
@@ -125,10 +130,12 @@ Para adicionar novas análises, siga os passos:
   - Produtividade por ciclo (kg/ciclo)
   - Visualização simples e clara com dois eixos
   - Foco na métrica principal: toneladas
-- **⚙️ Produtividade por Equipamento de Carga**:
+- **⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)**:
   - Toneladas por hora por equipamento (baseado na Tag carga)
+  - **Análise DIÁRIA**: Agrupamento por dia para melhor precisão
+  - **Visualização em Colunas Empilhadas**: Mostra contribuição individual de cada equipamento para a produtividade total diária
   - Comparação de eficiência entre diferentes equipamentos (EH-4031, EH-5018, etc.)
   - Análise temporal da performance individual de cada equipamento
   - Identificação de equipamentos mais/menos produtivos
-  - Cálculo baseado em horas operacionais reais por equipamento
+  - **Cálculo**: Soma da massa por dia ÷ horas operacionais únicas no dia
   - Filtros automáticos para Tags de carga válidas (exclui "-" e vazios)
