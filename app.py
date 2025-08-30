@@ -495,7 +495,7 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
+def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_input=None):
     """Obtém análise de produtividade: toneladas por período e toneladas por hora (média diária e mensal)"""
     logger.info("🔄 Processando análise de produtividade com base em ton/h (média diária e mensal)...")
     process_start = time.time()
@@ -508,13 +508,15 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
         raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
     if 'Massa' not in df.columns:
         raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
     
     # Processar dados de forma otimizada
     logger.info("🔄 Convertendo datas...")
     df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
     
-    # Remover datas inválidas e valores nulos em Massa
-    df = df.dropna(subset=['DataHoraInicio', 'Massa'])
+    # Remover datas inválidas e valores nulos em Massa e Tipo Input
+    df = df.dropna(subset=['DataHoraInicio', 'Massa', 'Tipo Input'])
     
     # Aplicar filtros de data se fornecidos
     if data_inicio:
@@ -526,6 +528,12 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
         data_fim_dt = pd.to_datetime(data_fim)
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -774,6 +782,35 @@ def cycles_by_year_month():
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 
+@app.route('/api/tipos_input')
+def get_tipos_input():
+    """Retorna lista única de tipos de input disponíveis nos dados"""
+    logger.info("🚀 API tipos_input chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Carregar dados brutos
+        df = load_data_with_cache()
+        
+        # Verificar se a coluna existe
+        if 'Tipo Input' not in df.columns:
+            raise ValueError('Coluna Tipo Input não encontrada nos dados')
+        
+        # Obter tipos únicos, excluindo valores nulos
+        tipos_input = df['Tipo Input'].dropna().unique().tolist()
+        tipos_input.sort()  # Ordenar alfabeticamente
+        
+        logger.info(f"✅ API tipos_input concluída com sucesso!")
+        logger.info(f"📊 {len(tipos_input)} tipos de input encontrados: {tipos_input}")
+        logger.info(f"⏱️ Tempo total da API: {time.time() - api_start_time:.2f}s")
+        
+        return jsonify(tipos_input)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API tipos_input após {error_time:.2f}s: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/cycles_by_tipo_input')
 def cycles_by_tipo_input():
     logger.info("🚀 API cycles_by_tipo_input chamada")
@@ -928,10 +965,17 @@ def productivity_analysis():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_productivity_analysis(data_inicio, data_fim)
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        
+        # Usar função com filtros de data e tipos de input
+        result = get_processed_productivity_analysis(data_inicio, data_fim, tipos_input)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API productivity_analysis concluída com sucesso!")

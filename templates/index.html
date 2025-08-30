@@ -284,6 +284,131 @@
         align-items: end;
       }
 
+      /* Segunda linha de filtros */
+      .filters-row-secondary {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+        padding: 12px;
+        background-color: var(--background-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        max-width: 400px; /* Limita a 1/3 da largura típica */
+      }
+
+      .filter-group-secondary {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 200px;
+        max-width: 300px;
+      }
+
+      .filter-group-secondary label {
+        font-weight: 500;
+        color: var(--text-primary);
+        font-size: 13px;
+        margin: 0;
+      }
+
+      /* Estilos para multiselect de tipos de input */
+      .multiselect-container {
+        position: relative;
+        width: 100%;
+        min-width: 180px;
+        max-width: 280px;
+      }
+
+      .multiselect-display {
+        background-color: var(--card-background);
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s ease;
+        color: var(--text-primary);
+        min-height: 18px;
+        font-size: 14px;
+      }
+
+      .multiselect-display:hover {
+        border-color: var(--accent-secondary);
+        box-shadow: 0 0 0 1px rgba(68, 209, 221, 0.1);
+        background-color: var(--background-hover);
+      }
+
+      .multiselect-arrow {
+        transition: transform 0.2s ease;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      .multiselect-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: var(--card-background);
+        border: 1px solid var(--border-primary);
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        max-height: 180px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 2px;
+      }
+
+      .multiselect-dropdown.show {
+        display: block;
+      }
+
+      .multiselect-option {
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-secondary);
+        transition: background-color 0.2s ease;
+      }
+
+      .multiselect-option:hover {
+        background-color: var(--background-hover);
+      }
+
+      .multiselect-option:last-child {
+        border-bottom: none;
+      }
+
+      .multiselect-option input[type="checkbox"] {
+        margin: 0;
+        cursor: pointer;
+      }
+
+      .multiselect-option label {
+        flex: 1;
+        margin: 0;
+        cursor: pointer;
+        color: var(--text-primary);
+        font-size: 13px;
+      }
+
+      .multiselect-option:first-child {
+        font-weight: 600;
+        background-color: var(--background-hover);
+      }
+
+      /* Container das opções individuais */
+      #tiposInputOptions {
+        background-color: var(--card-background);
+        border-radius: 0 0 6px 6px;
+      }
+
       .search-button {
         background-color: var(--accent-secondary);
         color: #fff;
@@ -519,6 +644,41 @@
               </button>
             </div>
           </div>
+
+          <!-- Segunda linha para filtros específicos -->
+          <div
+            class="filters-row-secondary"
+            id="filtroTiposInput"
+            style="display: none"
+          >
+            <div class="filter-group-secondary">
+              <label for="tiposInput">Filtrar por Tipos de Input:</label>
+              <div class="multiselect-container">
+                <div
+                  class="multiselect-display"
+                  id="tiposInputDisplay"
+                  onclick="toggleTiposInputDropdown()"
+                >
+                  <span id="tiposInputText">Todos os tipos</span>
+                  <span class="multiselect-arrow">▼</span>
+                </div>
+                <div class="multiselect-dropdown" id="tiposInputDropdown">
+                  <div class="multiselect-option">
+                    <input
+                      type="checkbox"
+                      id="selectAllTipos"
+                      onchange="toggleAllTipos()"
+                      checked
+                    />
+                    <label for="selectAllTipos">Selecionar Todos</label>
+                  </div>
+                  <div id="tiposInputOptions">
+                    <!-- Options will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Área do gráfico -->
@@ -585,10 +745,22 @@
         } else if (tipo === "productivity_analysis") {
           menuLinks[5].classList.add("active");
           chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
+          // Mostrar filtro de tipos de input e carregar dados
+          document.getElementById("filtroTiposInput").style.display = "block";
+          if (tiposInputDisponiveis.length === 0) {
+            loadTiposInput();
+          }
         } else if (tipo === "productivity_by_equipment") {
           menuLinks[6].classList.add("active");
           chartTitleText.textContent =
             "⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)";
+        }
+
+        // Mostrar/esconder filtro de tipos de input baseado no tipo de análise
+        if (tipo === "productivity_analysis") {
+          document.getElementById("filtroTiposInput").style.display = "block";
+        } else {
+          document.getElementById("filtroTiposInput").style.display = "none";
         }
 
         // Salvar tipo selecionado
@@ -596,6 +768,7 @@
         console.log(`📊 Análise selecionada: ${tipo}`);
 
         // Limpar gráfico quando trocar de análise
+        graficoComDados = false; // Resetar estado dos dados
         document.getElementById("chart").innerHTML = `
           <div style="text-align: center; padding: 100px 50px; color: var(--text-secondary);">
             <h3>📊 Selecione um Período</h3>
@@ -631,6 +804,192 @@
         // Executar análise com filtros
         showAnalysis(tipoAnaliseAtual, dataInicio, dataFim);
       }
+
+      function limparFiltros() {
+        document.getElementById("dataInicio").value = "";
+        document.getElementById("dataFim").value = "";
+
+        // Limpar filtro de tipos de input se estiver visível
+        if (
+          document.getElementById("filtroTiposInput").style.display !== "none"
+        ) {
+          resetTiposInput();
+        }
+
+        // Resetar estado dos dados carregados
+        graficoComDados = false;
+
+        console.log("🗑️ Filtros limpos");
+      }
+
+      // Funções para controle do multiselect de tipos de input
+      let tiposInputDisponiveis = [];
+      let tiposInputSelecionados = [];
+      let graficoComDados = false; // Controla se há dados carregados no gráfico
+
+      function loadTiposInput() {
+        console.log("🔄 Carregando tipos de input disponíveis...");
+
+        fetch("/api/tipos_input")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              console.error("❌ Erro ao carregar tipos de input:", data.error);
+              return;
+            }
+
+            tiposInputDisponiveis = data;
+            tiposInputSelecionados = [...data]; // Selecionar todos por padrão
+
+            console.log("✅ Tipos de input carregados:", tiposInputDisponiveis);
+            populateTiposInputOptions();
+            updateTiposInputDisplay();
+          })
+          .catch((error) => {
+            console.error("❌ Erro na requisição de tipos de input:", error);
+          });
+      }
+
+      function populateTiposInputOptions() {
+        const container = document.getElementById("tiposInputOptions");
+        container.innerHTML = "";
+
+        tiposInputDisponiveis.forEach((tipo) => {
+          const optionDiv = document.createElement("div");
+          optionDiv.className = "multiselect-option";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `tipo-${tipo}`;
+          checkbox.value = tipo;
+          checkbox.checked = tiposInputSelecionados.includes(tipo);
+          checkbox.onchange = () => toggleTipoInput(tipo);
+
+          const label = document.createElement("label");
+          label.htmlFor = `tipo-${tipo}`;
+          label.textContent = tipo;
+
+          optionDiv.appendChild(checkbox);
+          optionDiv.appendChild(label);
+          container.appendChild(optionDiv);
+        });
+      }
+
+      function toggleTiposInputDropdown() {
+        const dropdown = document.getElementById("tiposInputDropdown");
+        const arrow = document.querySelector(".multiselect-arrow");
+
+        if (dropdown.classList.contains("show")) {
+          dropdown.classList.remove("show");
+          arrow.style.transform = "rotate(0deg)";
+        } else {
+          dropdown.classList.add("show");
+          arrow.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function toggleTipoInput(tipo) {
+        if (tiposInputSelecionados.includes(tipo)) {
+          tiposInputSelecionados = tiposInputSelecionados.filter(
+            (t) => t !== tipo
+          );
+        } else {
+          tiposInputSelecionados.push(tipo);
+        }
+
+        updateTiposInputDisplay();
+        updateSelectAllState();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (tipoAnaliseAtual === "productivity_analysis" && graficoComDados) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function toggleAllTipos() {
+        const selectAll = document.getElementById("selectAllTipos");
+
+        if (selectAll.checked) {
+          tiposInputSelecionados = [...tiposInputDisponiveis];
+        } else {
+          tiposInputSelecionados = [];
+        }
+
+        // Atualizar checkboxes individuais
+        tiposInputDisponiveis.forEach((tipo) => {
+          const checkbox = document.getElementById(`tipo-${tipo}`);
+          if (checkbox) checkbox.checked = selectAll.checked;
+        });
+
+        updateTiposInputDisplay();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (tipoAnaliseAtual === "productivity_analysis" && graficoComDados) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function atualizarGraficoComFiltro() {
+        // Obter filtros atuais de data
+        const dataInicio = document.getElementById("dataInicio").value;
+        const dataFim = document.getElementById("dataFim").value;
+
+        // Só atualizar se há dados carregados no gráfico
+        if (graficoComDados) {
+          console.log("🔄 Atualizando gráfico com filtros de tipo input...");
+          showAnalysis(tipoAnaliseAtual, dataInicio, dataFim);
+        } else {
+          console.log(
+            "ℹ️ Nenhum dado carregado. Carregue dados primeiro usando os filtros de data."
+          );
+        }
+      }
+
+      function updateSelectAllState() {
+        const selectAll = document.getElementById("selectAllTipos");
+        selectAll.checked =
+          tiposInputSelecionados.length === tiposInputDisponiveis.length;
+      }
+
+      function updateTiposInputDisplay() {
+        const displayText = document.getElementById("tiposInputText");
+
+        if (tiposInputSelecionados.length === 0) {
+          displayText.textContent = "Nenhum tipo selecionado";
+        } else if (
+          tiposInputSelecionados.length === tiposInputDisponiveis.length
+        ) {
+          displayText.textContent = "Todos os tipos";
+        } else if (tiposInputSelecionados.length === 1) {
+          displayText.textContent = tiposInputSelecionados[0];
+        } else {
+          displayText.textContent = `${tiposInputSelecionados.length} tipos selecionados`;
+        }
+      }
+
+      function resetTiposInput() {
+        tiposInputSelecionados = [...tiposInputDisponiveis];
+        populateTiposInputOptions();
+        updateTiposInputDisplay();
+        document.getElementById("selectAllTipos").checked = true;
+
+        // Fechar dropdown se estiver aberto
+        document.getElementById("tiposInputDropdown").classList.remove("show");
+        document.querySelector(".multiselect-arrow").style.transform =
+          "rotate(0deg)";
+      }
+
+      // Fechar dropdown quando clicar fora
+      document.addEventListener("click", function (event) {
+        const container = document.querySelector(".multiselect-container");
+        if (container && !container.contains(event.target)) {
+          document
+            .getElementById("tiposInputDropdown")
+            .classList.remove("show");
+          document.querySelector(".multiselect-arrow").style.transform =
+            "rotate(0deg)";
+        }
+      });
 
       // Gerenciamento de Tema
       function initTheme() {
@@ -729,6 +1088,19 @@
         }
         if (dataFim) {
           params.append("data_fim", dataFim);
+        }
+
+        // Adicionar tipos de input se for análise de produtividade e houver tipos selecionados
+        if (
+          analysisType === "productivity_analysis" &&
+          tiposInputSelecionados.length > 0 &&
+          tiposInputSelecionados.length < tiposInputDisponiveis.length
+        ) {
+          params.append("tipos_input", tiposInputSelecionados.join(","));
+          console.log(
+            "🔍 Filtro de Tipos Input aplicado:",
+            tiposInputSelecionados
+          );
         }
 
         if (params.toString()) {
@@ -2441,6 +2813,12 @@
                     `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(
                       2
                     )}ms`
+                  );
+
+                  // Marcar que há dados carregados no gráfico
+                  graficoComDados = true;
+                  console.log(
+                    "✅ Gráfico de produtividade carregado. Filtro de tipos ativo."
                   );
                 }
               );
