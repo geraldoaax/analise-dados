@@ -164,9 +164,9 @@ def get_processed_cycles_data(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_cycles_by_tipo_input(data_inicio=None, data_fim=None):
-    """Obtém dados processados por Tipo Input com filtro de data"""
-    logger.info("🔄 Processando dados por Tipo Input com filtro de data...")
+def get_processed_cycles_by_tipo_input(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados processados por Tipo Input com filtros de data, tipos de input e frota de transporte"""
+    logger.info("🔄 Processando dados por Tipo Input com filtros avançados...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -196,6 +196,20 @@ def get_processed_cycles_by_tipo_input(data_inicio=None, data_fim=None):
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
     
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
+    
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
     # Verificar se restaram dados após filtros
@@ -222,9 +236,9 @@ def get_processed_cycles_by_tipo_input(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_production_by_activity_type(data_inicio=None, data_fim=None):
-    """Obtém dados de produção (soma de massa) por tipo de atividade com filtro de data"""
-    logger.info("🔄 Processando dados de produção por tipo de atividade com filtro de data...")
+def get_processed_production_by_activity_type(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados de produção (soma de massa) por tipo de atividade com filtros avançados"""
+    logger.info("🔄 Processando dados de produção por tipo de atividade com filtros avançados...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -237,13 +251,15 @@ def get_processed_production_by_activity_type(data_inicio=None, data_fim=None):
         raise ValueError('Coluna Tipo de atividade não encontrada nos dados')
     if 'Massa' not in df.columns:
         raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
     
     # Processar dados de forma otimizada
     logger.info("🔄 Convertendo datas...")
     df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
     
     # Remover datas inválidas e valores nulos
-    df = df.dropna(subset=['DataHoraInicio', 'Tipo de atividade', 'Massa'])
+    df = df.dropna(subset=['DataHoraInicio', 'Tipo de atividade', 'Massa', 'Tipo Input'])
     
     # Aplicar filtros de data se fornecidos
     if data_inicio:
@@ -255,6 +271,20 @@ def get_processed_production_by_activity_type(data_inicio=None, data_fim=None):
         data_fim_dt = pd.to_datetime(data_fim)
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -313,9 +343,9 @@ def get_processed_production_by_activity_type(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
-    """Obtém dados de produção (soma de massa) por especificação de material com filtro de data"""
-    logger.info("🔄 Processando dados de produção por especificação de material com filtro de data...")
+def get_processed_production_by_material_spec(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados de produção (soma de massa) por especificação de material com filtros avançados"""
+    logger.info("🔄 Processando dados de produção por especificação de material com filtros avançados...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -328,13 +358,15 @@ def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
         raise ValueError('Coluna Especificacao de material não encontrada nos dados')
     if 'Massa' not in df.columns:
         raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
     
     # Processar dados de forma otimizada
     logger.info("🔄 Convertendo datas...")
     df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
     
     # Remover datas inválidas e valores nulos
-    df = df.dropna(subset=['DataHoraInicio', 'Especificacao de material', 'Massa'])
+    df = df.dropna(subset=['DataHoraInicio', 'Especificacao de material', 'Massa', 'Tipo Input'])
     
     # Aplicar filtros de data se fornecidos
     if data_inicio:
@@ -346,6 +378,20 @@ def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
         data_fim_dt = pd.to_datetime(data_fim)
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -404,9 +450,9 @@ def get_processed_production_by_material_spec(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_production_by_material(data_inicio=None, data_fim=None):
-    """Obtém dados de produção (soma de massa) por material com filtro de data"""
-    logger.info("🔄 Processando dados de produção por material com filtro de data...")
+def get_processed_production_by_material(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados de produção (soma de massa) por material com filtros avançados"""
+    logger.info("🔄 Processando dados de produção por material com filtros avançados...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -419,13 +465,15 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
         raise ValueError('Coluna Material não encontrada nos dados')
     if 'Massa' not in df.columns:
         raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
     
     # Processar dados de forma otimizada
     logger.info("🔄 Convertendo datas...")
     df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
     
     # Remover datas inválidas e valores nulos
-    df = df.dropna(subset=['DataHoraInicio', 'Material', 'Massa'])
+    df = df.dropna(subset=['DataHoraInicio', 'Material', 'Massa', 'Tipo Input'])
     
     # Aplicar filtros de data se fornecidos
     if data_inicio:
@@ -437,6 +485,20 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
         data_fim_dt = pd.to_datetime(data_fim)
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -869,10 +931,24 @@ def cycles_by_tipo_input():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_cycles_by_tipo_input(data_inicio, data_fim)
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_cycles_by_tipo_input(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API cycles_by_tipo_input concluída com sucesso!")
@@ -905,10 +981,24 @@ def production_by_activity_type():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_production_by_activity_type(data_inicio, data_fim)
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_production_by_activity_type(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API production_by_activity_type concluída com sucesso!")
@@ -941,10 +1031,24 @@ def production_by_material_spec():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_production_by_material_spec(data_inicio, data_fim)
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_production_by_material_spec(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API production_by_material_spec concluída com sucesso!")
@@ -977,10 +1081,24 @@ def production_by_material():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_production_by_material(data_inicio, data_fim)
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_production_by_material(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API production_by_material concluída com sucesso!")

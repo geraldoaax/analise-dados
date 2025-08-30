@@ -777,11 +777,6 @@
         } else if (tipo === "productivity_analysis") {
           menuLinks[5].classList.add("active");
           chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
-          // Mostrar filtro de tipos de input e carregar dados
-          document.getElementById("filtroTiposInput").style.display = "block";
-          if (tiposInputDisponiveis.length === 0) {
-            loadTiposInput();
-          }
         } else if (tipo === "productivity_by_equipment") {
           menuLinks[6].classList.add("active");
           chartTitleText.textContent =
@@ -795,15 +790,29 @@
           "filtroFrotaTransporte"
         );
 
-        if (tipo === "productivity_analysis") {
+        // Relatórios que suportam ambos os filtros (tipos input + frota transporte)
+        if (
+          tipo === "productivity_analysis" ||
+          tipo === "cycles_by_tipo_input" ||
+          tipo === "production_by_activity_type" ||
+          tipo === "production_by_material_spec" ||
+          tipo === "production_by_material"
+        ) {
           filtrosContainer.style.display = "flex";
           filtroTiposInput.style.display = "flex";
           filtroFrotaTransporte.style.display = "flex";
+
+          // Carregar tipos de input se ainda não foram carregados
+          if (tiposInputDisponiveis.length === 0) {
+            loadTiposInput();
+          }
           // Carregar frotas de transporte se ainda não foram carregadas
           if (frotasTransporteDisponiveis.length === 0) {
             loadFrotasTransporte();
           }
-        } else if (tipo === "productivity_by_equipment") {
+        }
+        // Relatórios que suportam apenas frota de transporte
+        else if (tipo === "productivity_by_equipment") {
           filtrosContainer.style.display = "flex";
           filtroTiposInput.style.display = "none";
           filtroFrotaTransporte.style.display = "flex";
@@ -811,7 +820,9 @@
           if (frotasTransporteDisponiveis.length === 0) {
             loadFrotasTransporte();
           }
-        } else {
+        }
+        // Relatórios sem filtros específicos
+        else {
           filtrosContainer.style.display = "none";
           filtroTiposInput.style.display = "none";
           filtroFrotaTransporte.style.display = "none";
@@ -971,7 +982,14 @@
         updateSelectAllState();
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
-        if (tipoAnaliseAtual === "productivity_analysis" && graficoComDados) {
+        if (
+          (tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material") &&
+          graficoComDados
+        ) {
           atualizarGraficoComFiltro();
         }
       }
@@ -994,7 +1012,14 @@
         updateTiposInputDisplay();
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
-        if (tipoAnaliseAtual === "productivity_analysis" && graficoComDados) {
+        if (
+          (tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material") &&
+          graficoComDados
+        ) {
           atualizarGraficoComFiltro();
         }
       }
@@ -1136,7 +1161,11 @@
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
           (tipoAnaliseAtual === "productivity_analysis" ||
-            tipoAnaliseAtual === "productivity_by_equipment") &&
+            tipoAnaliseAtual === "productivity_by_equipment" ||
+            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1163,7 +1192,11 @@
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
           (tipoAnaliseAtual === "productivity_analysis" ||
-            tipoAnaliseAtual === "productivity_by_equipment") &&
+            tipoAnaliseAtual === "productivity_by_equipment" ||
+            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1332,9 +1365,13 @@
           params.append("data_fim", dataFim);
         }
 
-        // Adicionar tipos de input se for análise de produtividade e houver tipos selecionados
+        // Adicionar tipos de input para análises que suportam e houver tipos selecionados
         if (
-          analysisType === "productivity_analysis" &&
+          (analysisType === "productivity_analysis" ||
+            analysisType === "cycles_by_tipo_input" ||
+            analysisType === "production_by_activity_type" ||
+            analysisType === "production_by_material_spec" ||
+            analysisType === "production_by_material") &&
           tiposInputSelecionados.length > 0 &&
           tiposInputSelecionados.length < tiposInputDisponiveis.length
         ) {
@@ -1345,10 +1382,14 @@
           );
         }
 
-        // Adicionar frota de transporte se for análise que suporta e houver frotas selecionadas
+        // Adicionar frota de transporte para análises que suportam e houver frotas selecionadas
         if (
           (analysisType === "productivity_analysis" ||
-            analysisType === "productivity_by_equipment") &&
+            analysisType === "productivity_by_equipment" ||
+            analysisType === "cycles_by_tipo_input" ||
+            analysisType === "production_by_activity_type" ||
+            analysisType === "production_by_material_spec" ||
+            analysisType === "production_by_material") &&
           frotasTransporteSelecionadas.length > 0 &&
           frotasTransporteSelecionadas.length <
             frotasTransporteDisponiveis.length
@@ -1847,6 +1888,12 @@
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
                 );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de ciclos por tipo input carregado. Filtros ativos."
+                );
               });
             })
             .catch((error) => {
@@ -2185,6 +2232,12 @@
                 );
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de produção por atividade carregado. Filtros ativos."
                 );
               });
             })
@@ -2525,6 +2578,12 @@
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
                 );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de produção por especificação carregado. Filtros ativos."
+                );
               });
             })
             .catch((error) => {
@@ -2852,6 +2911,12 @@
                 );
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de produção por material carregado. Filtros ativos."
                 );
               });
             })
@@ -3308,6 +3373,12 @@
                 );
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de produtividade por equipamento carregado. Filtros ativos."
                 );
               });
             })
