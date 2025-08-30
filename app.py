@@ -78,8 +78,8 @@ def load_data_with_cache():
         file_start = time.time()
         
         try:
-            # Carregar as colunas necessárias (incluindo Tag carga para produtividade por equipamento)
-            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material', 'Material', 'Tag carga'])
+            # Carregar as colunas necessárias (incluindo Tag carga para produtividade por equipamento e Frota transporte para filtros)
+            df = pd.read_excel(filename, usecols=['DataHoraInicio', 'Tipo Input', 'Massa', 'Tipo de atividade', 'Especificacao de material', 'Material', 'Tag carga', 'Frota transporte'])
             rows = len(df)
             total_rows += rows
             df_list.append(df)
@@ -495,7 +495,7 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
     
     return result
 
-def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_input=None):
+def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
     """Obtém análise de produtividade: toneladas por período e toneladas por hora (média diária e mensal)"""
     logger.info("🔄 Processando análise de produtividade com base em ton/h (média diária e mensal)...")
     process_start = time.time()
@@ -534,6 +534,14 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_i
         df = df[df['Tipo Input'].isin(tipos_input)]
         logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
         logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -627,7 +635,7 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_i
     
     return result
 
-def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None):
+def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None, frota_transporte=None):
     """Obtém análise de produtividade por equipamento de carga: toneladas/hora por Tag carga"""
     logger.info("🔄 Processando análise de produtividade por equipamento de carga com filtro de data...")
     process_start = time.time()
@@ -653,6 +661,14 @@ def get_processed_productivity_by_equipment(data_inicio=None, data_fim=None):
     # Filtrar apenas registros com Tag carga válida (não '-' ou vazio)
     df = df[df['Tag carga'] != '-']
     df = df[df['Tag carga'].str.strip() != '']
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     # Aplicar filtros de data se fornecidos
     if data_inicio:
@@ -809,6 +825,38 @@ def get_tipos_input():
     except Exception as e:
         error_time = time.time() - api_start_time
         logger.error(f"❌ Erro na API tipos_input após {error_time:.2f}s: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/frota_transporte')
+def get_frota_transporte():
+    """Retorna lista única de frotas de transporte (Tag carga) disponíveis nos dados"""
+    logger.info("🚀 API frota_transporte chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Carregar dados brutos
+        df = load_data_with_cache()
+        
+        # Verificar se a coluna existe
+        if 'Frota transporte' not in df.columns:
+            raise ValueError('Coluna Frota transporte não encontrada nos dados')
+        
+        # Obter frotas únicas, excluindo valores nulos, vazios e "-"
+        frota_transporte = df['Frota transporte'].dropna()
+        frota_transporte = frota_transporte[frota_transporte != '-']
+        frota_transporte = frota_transporte[frota_transporte.str.strip() != '']
+        frota_transporte = frota_transporte.unique().tolist()
+        frota_transporte.sort()  # Ordenar alfabeticamente
+        
+        logger.info(f"✅ API frota_transporte concluída com sucesso!")
+        logger.info(f"📊 {len(frota_transporte)} frotas de transporte encontradas: {frota_transporte}")
+        logger.info(f"⏱️ Tempo total da API: {time.time() - api_start_time:.2f}s")
+        
+        return jsonify(frota_transporte)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API frota_transporte após {error_time:.2f}s: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/cycles_by_tipo_input')
@@ -971,11 +1019,18 @@ def productivity_analysis():
         if tipos_input_param:
             tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
         
-        # Usar função com filtros de data e tipos de input
-        result = get_processed_productivity_analysis(data_inicio, data_fim, tipos_input)
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_productivity_analysis(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API productivity_analysis concluída com sucesso!")
@@ -1010,10 +1065,17 @@ def productivity_by_equipment():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_productivity_by_equipment(data_inicio, data_fim)
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data e frota de transporte
+        result = get_processed_productivity_by_equipment(data_inicio, data_fim, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API productivity_by_equipment (Tag carga DIÁRIA) concluída com sucesso!")

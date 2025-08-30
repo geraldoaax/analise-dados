@@ -284,18 +284,18 @@
         align-items: end;
       }
 
-      /* Segunda linha de filtros */
+      /* Segunda linha de filtros (lado a lado) */
       .filters-row-secondary {
         display: flex;
-        gap: 12px;
-        align-items: center;
+        gap: 20px;
+        align-items: flex-start;
         margin-top: 8px;
         padding: 12px;
         background-color: var(--background-secondary);
         border: 1px solid var(--border-primary);
         border-radius: 6px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        max-width: 400px; /* Limita a 1/3 da largura típica */
+        flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
       }
 
       .filter-group-secondary {
@@ -645,13 +645,14 @@
             </div>
           </div>
 
-          <!-- Segunda linha para filtros específicos -->
+          <!-- Segunda linha para filtros específicos (lado a lado) -->
           <div
             class="filters-row-secondary"
-            id="filtroTiposInput"
+            id="filtrosEspecificos"
             style="display: none"
           >
-            <div class="filter-group-secondary">
+            <!-- Filtro de Tipos de Input -->
+            <div class="filter-group-secondary" id="filtroTiposInput">
               <label for="tiposInput">Filtrar por Tipos de Input:</label>
               <div class="multiselect-container">
                 <div
@@ -673,6 +674,37 @@
                     <label for="selectAllTipos">Selecionar Todos</label>
                   </div>
                   <div id="tiposInputOptions">
+                    <!-- Options will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Filtro de Frota de Transporte -->
+            <div class="filter-group-secondary" id="filtroFrotaTransporte">
+              <label for="frotaTransporte"
+                >Filtrar por Frota de Transporte:</label
+              >
+              <div class="multiselect-container">
+                <div
+                  class="multiselect-display"
+                  id="frotaTransporteDisplay"
+                  onclick="toggleFrotaTransporteDropdown()"
+                >
+                  <span id="frotaTransporteText">Todas as frotas</span>
+                  <span class="multiselect-arrow">▼</span>
+                </div>
+                <div class="multiselect-dropdown" id="frotaTransporteDropdown">
+                  <div class="multiselect-option">
+                    <input
+                      type="checkbox"
+                      id="selectAllFrotas"
+                      onchange="toggleAllFrotas()"
+                      checked
+                    />
+                    <label for="selectAllFrotas">Selecionar Todas</label>
+                  </div>
+                  <div id="frotaTransporteOptions">
                     <!-- Options will be populated dynamically -->
                   </div>
                 </div>
@@ -756,11 +788,33 @@
             "⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)";
         }
 
-        // Mostrar/esconder filtro de tipos de input baseado no tipo de análise
+        // Mostrar/esconder filtros baseado no tipo de análise
+        const filtrosContainer = document.getElementById("filtrosEspecificos");
+        const filtroTiposInput = document.getElementById("filtroTiposInput");
+        const filtroFrotaTransporte = document.getElementById(
+          "filtroFrotaTransporte"
+        );
+
         if (tipo === "productivity_analysis") {
-          document.getElementById("filtroTiposInput").style.display = "block";
+          filtrosContainer.style.display = "flex";
+          filtroTiposInput.style.display = "flex";
+          filtroFrotaTransporte.style.display = "flex";
+          // Carregar frotas de transporte se ainda não foram carregadas
+          if (frotasTransporteDisponiveis.length === 0) {
+            loadFrotasTransporte();
+          }
+        } else if (tipo === "productivity_by_equipment") {
+          filtrosContainer.style.display = "flex";
+          filtroTiposInput.style.display = "none";
+          filtroFrotaTransporte.style.display = "flex";
+          // Carregar frotas de transporte se ainda não foram carregadas
+          if (frotasTransporteDisponiveis.length === 0) {
+            loadFrotasTransporte();
+          }
         } else {
-          document.getElementById("filtroTiposInput").style.display = "none";
+          filtrosContainer.style.display = "none";
+          filtroTiposInput.style.display = "none";
+          filtroFrotaTransporte.style.display = "none";
         }
 
         // Salvar tipo selecionado
@@ -809,11 +863,23 @@
         document.getElementById("dataInicio").value = "";
         document.getElementById("dataFim").value = "";
 
-        // Limpar filtro de tipos de input se estiver visível
+        // Limpar filtros específicos se estiverem visíveis
         if (
-          document.getElementById("filtroTiposInput").style.display !== "none"
+          document.getElementById("filtrosEspecificos").style.display !== "none"
         ) {
-          resetTiposInput();
+          // Limpar filtro de tipos de input se estiver visível
+          if (
+            document.getElementById("filtroTiposInput").style.display !== "none"
+          ) {
+            resetTiposInput();
+          }
+          // Limpar filtro de frota de transporte se estiver visível
+          if (
+            document.getElementById("filtroFrotaTransporte").style.display !==
+            "none"
+          ) {
+            resetFrotasTransporte();
+          }
         }
 
         // Resetar estado dos dados carregados
@@ -826,6 +892,10 @@
       let tiposInputDisponiveis = [];
       let tiposInputSelecionados = [];
       let graficoComDados = false; // Controla se há dados carregados no gráfico
+
+      // Funções para controle do multiselect de frota de transporte
+      let frotasTransporteDisponiveis = [];
+      let frotasTransporteSelecionadas = [];
 
       function loadTiposInput() {
         console.log("🔄 Carregando tipos de input disponíveis...");
@@ -979,15 +1049,187 @@
           "rotate(0deg)";
       }
 
+      // ============= FUNÇÕES PARA FROTA DE TRANSPORTE =============
+
+      function loadFrotasTransporte() {
+        console.log("🔄 Carregando frotas de transporte disponíveis...");
+
+        fetch("/api/frota_transporte")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              console.error(
+                "❌ Erro ao carregar frotas de transporte:",
+                data.error
+              );
+              return;
+            }
+
+            frotasTransporteDisponiveis = data;
+            frotasTransporteSelecionadas = [...data]; // Selecionar todas por padrão
+
+            console.log(
+              "✅ Frotas de transporte carregadas:",
+              frotasTransporteDisponiveis
+            );
+            populateFrotasTransporteOptions();
+            updateFrotasTransporteDisplay();
+          })
+          .catch((error) => {
+            console.error(
+              "❌ Erro na requisição de frotas de transporte:",
+              error
+            );
+          });
+      }
+
+      function populateFrotasTransporteOptions() {
+        const container = document.getElementById("frotaTransporteOptions");
+        container.innerHTML = "";
+
+        frotasTransporteDisponiveis.forEach((frota) => {
+          const optionDiv = document.createElement("div");
+          optionDiv.className = "multiselect-option";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `frota-${frota}`;
+          checkbox.value = frota;
+          checkbox.checked = frotasTransporteSelecionadas.includes(frota);
+          checkbox.onchange = () => toggleFrotaTransporte(frota);
+
+          const label = document.createElement("label");
+          label.htmlFor = `frota-${frota}`;
+          label.textContent = frota;
+
+          optionDiv.appendChild(checkbox);
+          optionDiv.appendChild(label);
+          container.appendChild(optionDiv);
+        });
+      }
+
+      function toggleFrotaTransporteDropdown() {
+        const dropdown = document.getElementById("frotaTransporteDropdown");
+        const arrow = document.querySelectorAll(".multiselect-arrow")[1]; // Segunda seta (frota)
+
+        if (dropdown.classList.contains("show")) {
+          dropdown.classList.remove("show");
+          arrow.style.transform = "rotate(0deg)";
+        } else {
+          dropdown.classList.add("show");
+          arrow.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function toggleFrotaTransporte(frota) {
+        if (frotasTransporteSelecionadas.includes(frota)) {
+          frotasTransporteSelecionadas = frotasTransporteSelecionadas.filter(
+            (f) => f !== frota
+          );
+        } else {
+          frotasTransporteSelecionadas.push(frota);
+        }
+
+        updateFrotasTransporteDisplay();
+        updateSelectAllFrotasState();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "productivity_by_equipment") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function toggleAllFrotas() {
+        const selectAll = document.getElementById("selectAllFrotas");
+
+        if (selectAll.checked) {
+          frotasTransporteSelecionadas = [...frotasTransporteDisponiveis];
+        } else {
+          frotasTransporteSelecionadas = [];
+        }
+
+        // Atualizar checkboxes individuais
+        frotasTransporteDisponiveis.forEach((frota) => {
+          const checkbox = document.getElementById(`frota-${frota}`);
+          if (checkbox) checkbox.checked = selectAll.checked;
+        });
+
+        updateFrotasTransporteDisplay();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "productivity_by_equipment") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function updateSelectAllFrotasState() {
+        const selectAll = document.getElementById("selectAllFrotas");
+        selectAll.checked =
+          frotasTransporteSelecionadas.length ===
+          frotasTransporteDisponiveis.length;
+      }
+
+      function updateFrotasTransporteDisplay() {
+        const displayText = document.getElementById("frotaTransporteText");
+
+        if (frotasTransporteSelecionadas.length === 0) {
+          displayText.textContent = "Nenhuma frota selecionada";
+        } else if (
+          frotasTransporteSelecionadas.length ===
+          frotasTransporteDisponiveis.length
+        ) {
+          displayText.textContent = "Todas as frotas";
+        } else if (frotasTransporteSelecionadas.length === 1) {
+          displayText.textContent = frotasTransporteSelecionadas[0];
+        } else {
+          displayText.textContent = `${frotasTransporteSelecionadas.length} frotas selecionadas`;
+        }
+      }
+
+      function resetFrotasTransporte() {
+        frotasTransporteSelecionadas = [...frotasTransporteDisponiveis];
+        populateFrotasTransporteOptions();
+        updateFrotasTransporteDisplay();
+        document.getElementById("selectAllFrotas").checked = true;
+
+        // Fechar dropdown se estiver aberto
+        document
+          .getElementById("frotaTransporteDropdown")
+          .classList.remove("show");
+        const arrows = document.querySelectorAll(".multiselect-arrow");
+        if (arrows[1]) arrows[1].style.transform = "rotate(0deg)";
+      }
+
       // Fechar dropdown quando clicar fora
       document.addEventListener("click", function (event) {
-        const container = document.querySelector(".multiselect-container");
-        if (container && !container.contains(event.target)) {
-          document
-            .getElementById("tiposInputDropdown")
-            .classList.remove("show");
-          document.querySelector(".multiselect-arrow").style.transform =
-            "rotate(0deg)";
+        // Fechar dropdown de tipos de input
+        const containerTipos = document
+          .getElementById("tiposInputDisplay")
+          ?.closest(".multiselect-container");
+        if (containerTipos && !containerTipos.contains(event.target)) {
+          const dropdown = document.getElementById("tiposInputDropdown");
+          const arrow = document.querySelector(".multiselect-arrow");
+          if (dropdown) dropdown.classList.remove("show");
+          if (arrow) arrow.style.transform = "rotate(0deg)";
+        }
+
+        // Fechar dropdown de frota de transporte
+        const containerFrota = document
+          .getElementById("frotaTransporteDisplay")
+          ?.closest(".multiselect-container");
+        if (containerFrota && !containerFrota.contains(event.target)) {
+          const dropdown = document.getElementById("frotaTransporteDropdown");
+          const arrows = document.querySelectorAll(".multiselect-arrow");
+          if (dropdown) dropdown.classList.remove("show");
+          if (arrows[1]) arrows[1].style.transform = "rotate(0deg)";
         }
       });
 
@@ -1100,6 +1342,24 @@
           console.log(
             "🔍 Filtro de Tipos Input aplicado:",
             tiposInputSelecionados
+          );
+        }
+
+        // Adicionar frota de transporte se for análise que suporta e houver frotas selecionadas
+        if (
+          (analysisType === "productivity_analysis" ||
+            analysisType === "productivity_by_equipment") &&
+          frotasTransporteSelecionadas.length > 0 &&
+          frotasTransporteSelecionadas.length <
+            frotasTransporteDisponiveis.length
+        ) {
+          params.append(
+            "frota_transporte",
+            frotasTransporteSelecionadas.join(",")
+          );
+          console.log(
+            "🔍 Filtro de Frota de Transporte aplicado:",
+            frotasTransporteSelecionadas
           );
         }
 
