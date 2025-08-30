@@ -2316,15 +2316,15 @@
               // Preparar dados para gráfico simples de produtividade
               const x_values = data.map((item) => item.AnoMes);
               const toneladas_total = data.map((item) => item.toneladas_total);
-              const toneladas_por_ciclo = data.map(
-                (item) => item.toneladas_por_ciclo
+              const produtividade_ton_h = data.map(
+                (item) => item.produtividade_media_ton_h
               );
 
               console.log("📊 [FRONTEND] Valores X:", x_values);
               console.log("📊 [FRONTEND] Toneladas Total:", toneladas_total);
               console.log(
-                "📊 [FRONTEND] Produtividade (kg/ciclo):",
-                toneladas_por_ciclo
+                "📊 [FRONTEND] Produtividade (ton/h):",
+                produtividade_ton_h
               );
 
               const processStart = performance.now();
@@ -2348,20 +2348,20 @@
 
               const trace2 = {
                 x: x_values,
-                y: toneladas_por_ciclo,
+                y: produtividade_ton_h,
                 type: "scatter",
                 mode: "lines+markers",
-                name: "Produtividade (kg/ciclo)",
+                name: "Produtividade (ton/h)",
                 line: { color: themeColors.accent, width: 4 },
                 marker: { size: 10, color: themeColors.accent },
                 yaxis: "y2",
                 hovertemplate:
-                  "<b>%{x}</b><br>Produtividade: %{y:.0f} kg/ciclo<extra></extra>",
+                  "<b>%{x}</b><br>Produtividade: %{y:.2f} t/h<extra></extra>",
               };
 
               const layout = {
                 title: {
-                  text: "🚛 Produtividade: Toneladas por Período",
+                  text: "🚛 Produtividade: Toneladas por Período e Média Ton/h",
                   font: {
                     size: 20,
                     color: themeColors.text,
@@ -2389,7 +2389,7 @@
                 },
                 yaxis2: {
                   title: {
-                    text: "Produtividade (kg/ciclo)",
+                    text: "Produtividade Média (ton/h)",
                     font: { size: 14, color: themeColors.accent },
                   },
                   overlaying: "y",

@@ -496,8 +496,8 @@ def get_processed_production_by_material(data_inicio=None, data_fim=None):
     return result
 
 def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
-    """Obtém análise de produtividade: toneladas por período e toneladas por ciclo"""
-    logger.info("🔄 Processando análise de produtividade simplificada com filtro de data...")
+    """Obtém análise de produtividade: toneladas por período e toneladas por hora (média diária e mensal)"""
+    logger.info("🔄 Processando análise de produtividade com base em ton/h (média diária e mensal)...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -534,26 +534,63 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
         logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
         return []
     
-    logger.info("📅 Criando períodos...")
+    logger.info("📅 Criando estrutura de dados para cálculo de produtividade por hora...")
+    
+    # Adicionar colunas auxiliares para cálculos
+    df['Data'] = df['DataHoraInicio'].dt.date
+    df['DataHora'] = df['DataHoraInicio'].dt.floor('h')  # Agrupar por hora
     df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
     
-    logger.info("📊 Calculando métricas de produtividade simplificadas...")
+    logger.info("📊 Calculando produtividade diária (ton/h)...")
     
-    # Agrupar por período e calcular métricas simples
-    productivity_metrics = df.groupby('AnoMes').agg({
-        'Massa': ['count', 'sum', 'mean']
+    # Primeiro, calcular produtividade diária (ton/h)
+    daily_productivity = []
+    
+    # Agrupar por data para calcular produtividade diária
+    grouped_daily = df.groupby('Data')
+    
+    for data, day_data in grouped_daily:
+        # Calcular massa total do dia em toneladas
+        total_massa_kg = day_data['Massa'].sum()
+        total_toneladas = total_massa_kg / 1000
+        
+        # Calcular horas operacionais únicas no dia
+        horas_operacionais = len(day_data['DataHora'].unique())
+        
+        # Calcular produtividade diária (ton/h)
+        if horas_operacionais > 0:
+            produtividade_ton_h = total_toneladas / horas_operacionais
+        else:
+            produtividade_ton_h = 0
+        
+        daily_productivity.append({
+            'Data': data,
+            'AnoMes': day_data['AnoMes'].iloc[0],
+            'total_toneladas': round(total_toneladas, 2),
+            'horas_operacionais': horas_operacionais,
+            'produtividade_ton_h': round(produtividade_ton_h, 2),
+            'total_ciclos': len(day_data)
+        })
+    
+    # Converter para DataFrame
+    daily_df = pd.DataFrame(daily_productivity)
+    
+    logger.info("📊 Calculando métricas mensais (média das produtividades diárias)...")
+    
+    # Agrupar por período mensal e calcular médias
+    productivity_metrics = daily_df.groupby('AnoMes').agg({
+        'total_toneladas': 'sum',  # Soma total de toneladas no mês
+        'produtividade_ton_h': 'mean',  # Média das produtividades diárias (ton/h)
+        'horas_operacionais': 'sum',  # Total de horas operacionais no mês
+        'total_ciclos': 'sum'  # Total de ciclos no mês
     }).round(2)
     
-    # Simplificar nomes das colunas
-    productivity_metrics.columns = ['total_ciclos', 'massa_total_kg', 'massa_media_kg_ciclo']
+    # Renomear colunas para clareza
+    productivity_metrics.columns = ['toneladas_total', 'produtividade_media_ton_h', 'horas_operacionais_total', 'total_ciclos']
     
-    # Converter para toneladas e calcular métricas principais
-    productivity_metrics['toneladas_total'] = (productivity_metrics['massa_total_kg'] / 1000).round(2)
-    productivity_metrics['toneladas_por_ciclo'] = (productivity_metrics['massa_media_kg_ciclo']).round(2)  # Manter em kg para mostrar valores maiores
-    
-    # Calcular crescimento em toneladas
+    # Calcular crescimento em toneladas e produtividade
     productivity_metrics['crescimento_toneladas_pct'] = productivity_metrics['toneladas_total'].pct_change() * 100
-    productivity_metrics['crescimento_prod_pct'] = productivity_metrics['toneladas_por_ciclo'].pct_change() * 100
+    productivity_metrics['crescimento_prod_pct'] = productivity_metrics['produtividade_media_ton_h'].pct_change() * 100
     
     # Resetar index e converter período para string
     productivity_metrics = productivity_metrics.reset_index()
@@ -566,17 +603,18 @@ def get_processed_productivity_analysis(data_inicio=None, data_fim=None):
     productivity_metrics = productivity_metrics.sort_values('AnoMes')
     
     # Log das métricas calculadas
-    logger.info("📊 Métricas de produtividade simplificadas:")
+    logger.info("📊 Métricas de produtividade (ton/h - média mensal das médias diárias):")
     for _, row in productivity_metrics.iterrows():
         logger.info(f"   📅 {row['AnoMes']}: {row['toneladas_total']:.1f} t total, "
-                   f"{row['toneladas_por_ciclo']:.3f} t/ciclo, "
+                   f"{row['produtividade_media_ton_h']:.2f} t/h (média), "
+                   f"{row['horas_operacionais_total']:,.0f} h operacionais, "
                    f"{row['total_ciclos']:,.0f} ciclos")
     
     # Converter para dict para JSON
     result = productivity_metrics.to_dict(orient='records')
     
     process_time = time.time() - process_start
-    logger.info(f"✅ Análise de produtividade simplificada concluída em {process_time:.2f}s")
+    logger.info(f"✅ Análise de produtividade (ton/h) concluída em {process_time:.2f}s")
     logger.info(f"📊 {len(result)} períodos analisados")
     
     return result
@@ -905,7 +943,7 @@ def productivity_analysis():
             logger.info("📋 Primeiros registros de produtividade:")
             for i, record in enumerate(result[:3]):
                 logger.info(f"   {i+1}. {record['AnoMes']}: {record['toneladas_total']:.1f} t total, "
-                           f"{record['toneladas_por_ciclo']:.3f} t/ciclo, "
+                           f"{record['produtividade_media_ton_h']:.2f} t/h média, "
                            f"crescimento: {record['crescimento_toneladas_pct']:.1f}%")
             if len(result) > 3:
                 logger.info(f"   ... e mais {len(result) - 3} períodos")
