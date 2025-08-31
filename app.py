@@ -665,6 +665,116 @@ def get_processed_production_by_frota_transporte(data_inicio=None, data_fim=None
     
     return result
 
+def get_processed_production_by_frota_carga(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados de produção (soma de massa) por frota de carga (Tag carga) com filtros avançados"""
+    logger.info("🔄 Processando dados de produção por frota de carga (Tag carga) com filtros avançados...")
+    process_start = time.time()
+    
+    # Carregar dados brutos
+    df = load_data_with_cache()
+    
+    # Verificar se as colunas existem
+    if 'DataHoraInicio' not in df.columns:
+        raise ValueError('Coluna DataHoraInicio não encontrada nos dados')
+    if 'Tag carga' not in df.columns:
+        raise ValueError('Coluna Tag carga não encontrada nos dados')
+    if 'Massa' not in df.columns:
+        raise ValueError('Coluna Massa não encontrada nos dados')
+    if 'Tipo Input' not in df.columns:
+        raise ValueError('Coluna Tipo Input não encontrada nos dados')
+    
+    # Processar dados de forma otimizada
+    logger.info("🔄 Convertendo datas...")
+    df['DataHoraInicio'] = pd.to_datetime(df['DataHoraInicio'], errors='coerce')
+    
+    # Remover datas inválidas e valores nulos, incluindo frotas vazias ou "-"
+    df = df.dropna(subset=['DataHoraInicio', 'Tag carga', 'Massa', 'Tipo Input'])
+    # Filtrar frotas de carga válidas (não vazias e diferentes de "-")
+    df = df[df['Tag carga'] != '-']
+    df = df[df['Tag carga'].str.strip() != '']
+    
+    # Aplicar filtros de data se fornecidos
+    if data_inicio:
+        data_inicio_dt = pd.to_datetime(data_inicio)
+        df = df[df['DataHoraInicio'] >= data_inicio_dt]
+        logger.info(f"📅 Aplicado filtro de data início: {data_inicio}")
+    
+    if data_fim:
+        data_fim_dt = pd.to_datetime(data_fim)
+        df = df[df['DataHoraInicio'] <= data_fim_dt]
+        logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        df = df[df['Tipo Input'].isin(tipos_input)]
+        logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+        logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido (para manter compatibilidade)
+    if frota_transporte and len(frota_transporte) > 0:
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
+    
+    logger.info(f"📊 Registros após filtros: {len(df):,}")
+    
+    # Verificar se restaram dados após filtros
+    if len(df) == 0:
+        logger.warning("⚠️ Nenhum registro encontrado após aplicar filtros")
+        return []
+    
+    logger.info("📅 Criando períodos...")
+    df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+    
+    logger.info("📊 Agrupando dados por frota de carga (Tag carga) e somando massa...")
+    # Primeiro, calcular totais por frota de carga para identificar os maiores
+    totals_by_frota_carga = df.groupby('Tag carga')['Massa'].sum().sort_values(ascending=False)
+    logger.info(f"📋 Frotas de carga (Tag carga) encontradas: {len(totals_by_frota_carga)}")
+    
+    # Definir quantas frotas de carga mostrar individualmente (top 3)
+    top_n = 3
+    top_frotas_carga = totals_by_frota_carga.head(top_n).index.tolist()
+    logger.info(f"🔝 Top {top_n} frotas de carga: {top_frotas_carga}")
+    
+    # Log detalhado das frotas de carga e suas massas
+    for i, (frota_carga, massa) in enumerate(totals_by_frota_carga.head(10).items(), 1):
+        status = "🏆 TOP" if frota_carga in top_frotas_carga else "📦 OUTROS"
+        logger.info(f"   {i:2d}. {frota_carga}: {massa:,.0f} kg - {status}")
+    
+    # Criar nova coluna agrupando frotas de carga menores em "Outros"
+    df['Frota_Carga_Agrupada'] = df['Tag carga'].apply(
+        lambda x: x if x in top_frotas_carga else 'Outros'
+    )
+    
+    # Agrupar por período e frota de carga agrupada
+    production_data = df.groupby(['AnoMes', 'Frota_Carga_Agrupada'])['Massa'].sum().reset_index(name='massa_total')
+    
+    # Renomear coluna para manter compatibilidade com frontend
+    production_data = production_data.rename(columns={'Frota_Carga_Agrupada': 'Tag carga'})
+    
+    # Converter período para string e ordenar
+    production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+    production_data = production_data.sort_values(['AnoMes', 'Tag carga'])
+    
+    # Log do agrupamento realizado
+    frotas_carga_finais = production_data['Tag carga'].unique()
+    tem_outros = 'Outros' in frotas_carga_finais
+    logger.info(f"📋 Frotas de carga no resultado final: {list(frotas_carga_finais)}")
+    if tem_outros:
+        outros_total = production_data[production_data['Tag carga'] == 'Outros']['massa_total'].sum()
+        logger.info(f"📦 Total agrupado em 'Outros': {outros_total:,.2f} kg")
+    
+    # Converter para dict para JSON
+    result = production_data.to_dict(orient='records')
+    
+    process_time = time.time() - process_start
+    logger.info(f"✅ Processamento de produção por frota de carga concluído em {process_time:.2f}s")
+    logger.info(f"📊 {len(result)} registros encontrados")
+    
+    return result
+
 def get_processed_productivity_analysis(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
     """Obtém análise de produtividade: toneladas por período e toneladas por hora (média diária e mensal)"""
     logger.info("🔄 Processando análise de produtividade com base em ton/h (média diária e mensal)...")
@@ -1276,6 +1386,56 @@ def production_by_frota_transporte():
     except Exception as e:
         error_time = time.time() - api_start_time
         logger.error(f"❌ Erro na API production_by_frota_transporte após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
+
+@app.route('/api/production_by_frota_carga')
+def production_by_frota_carga():
+    logger.info("🚀 API production_by_frota_carga chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Obter parâmetros de data da URL
+        data_inicio = request.args.get('data_inicio')
+        data_fim = request.args.get('data_fim')
+        
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
+        
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_production_by_frota_carga(data_inicio, data_fim, tipos_input, frota_transporte)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_frota_carga concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        # Log dos primeiros registros para debug
+        if result:
+            logger.info("📋 Primeiros registros:")
+            for i, record in enumerate(result[:5]):
+                logger.info(f"   {i+1}. {record['AnoMes']} - {record['Tag carga']}: {record['massa_total']:,.2f} kg")
+            if len(result) > 5:
+                logger.info(f"   ... e mais {len(result) - 5} registros")
+        
+        return jsonify(result)
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_frota_carga após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         return jsonify({'error': f'Erro ao processar dados: {str(e)}'})
 
