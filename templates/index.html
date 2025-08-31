@@ -506,6 +506,7 @@
 
         .menu li {
           margin-bottom: 0;
+          min-width: -webkit-fill-available;
           min-width: fit-content;
         }
 
@@ -820,6 +821,7 @@
 
         // Relatórios que suportam ambos os filtros (tipos input + frota transporte)
         if (
+          tipo === "cycles_by_year_month" ||
           tipo === "productivity_analysis" ||
           tipo === "cycles_by_tipo_input" ||
           tipo === "production_by_activity_type" ||
@@ -1014,13 +1016,15 @@
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
-          (tipoAnaliseAtual === "productivity_analysis" ||
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "cycles_by_tipo_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga") &&
+            tipoAnaliseAtual === "production_by_frota_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1046,13 +1050,15 @@
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
-          (tipoAnaliseAtual === "productivity_analysis" ||
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "cycles_by_tipo_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga") &&
+            tipoAnaliseAtual === "production_by_frota_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1195,7 +1201,8 @@
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
-          (tipoAnaliseAtual === "productivity_analysis" ||
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "productivity_by_equipment" ||
             tipoAnaliseAtual === "cycles_by_tipo_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
@@ -1229,7 +1236,8 @@
 
         // Atualizar gráfico automaticamente se já tiver dados carregados
         if (
-          (tipoAnaliseAtual === "productivity_analysis" ||
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "productivity_by_equipment" ||
             tipoAnaliseAtual === "cycles_by_tipo_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
@@ -1408,13 +1416,13 @@
 
         // Adicionar tipos de input para análises que suportam e houver tipos selecionados
         if (
-          (analysisType === "productivity_analysis" ||
+          (analysisType === "cycles_by_year_month" ||
+            analysisType === "productivity_analysis" ||
             analysisType === "cycles_by_tipo_input" ||
             analysisType === "production_by_activity_type" ||
             analysisType === "production_by_material_spec" ||
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
-            analysisType === "production_by_material" ||
             analysisType === "production_by_frota_carga" ||
             analysisType === "production_by_frota_carga_nova") &&
           tiposInputSelecionados.length > 0
@@ -1428,7 +1436,8 @@
 
         // Adicionar frota de transporte para análises que suportam e houver frotas selecionadas
         if (
-          (analysisType === "productivity_analysis" ||
+          (analysisType === "cycles_by_year_month" ||
+            analysisType === "productivity_analysis" ||
             analysisType === "productivity_by_equipment" ||
             analysisType === "cycles_by_tipo_input" ||
             analysisType === "production_by_activity_type" ||
@@ -1647,6 +1656,12 @@
                 );
                 console.log(
                   `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(2)}ms`
+                );
+
+                // Marcar que há dados carregados no gráfico para permitir filtros
+                graficoComDados = true;
+                console.log(
+                  "✅ Gráfico de ciclos por ano/mês carregado. Filtros ativos."
                 );
               });
             })

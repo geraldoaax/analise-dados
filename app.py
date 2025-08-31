@@ -111,9 +111,9 @@ def load_data_with_cache():
     
     return combined_df
 
-def get_processed_cycles_data(data_inicio=None, data_fim=None):
-    """Obtém dados processados com filtro de data"""
-    logger.info("🔄 Processando dados com filtro de data...")
+def get_processed_cycles_data(data_inicio=None, data_fim=None, tipos_input=None, frota_transporte=None):
+    """Obtém dados processados com filtros de data, tipos de input e frota de transporte"""
+    logger.info("🔄 Processando dados com filtros avançados...")
     process_start = time.time()
     
     # Carregar dados brutos
@@ -140,6 +140,20 @@ def get_processed_cycles_data(data_inicio=None, data_fim=None):
         data_fim_dt = pd.to_datetime(data_fim)
         df = df[df['DataHoraInicio'] <= data_fim_dt]
         logger.info(f"📅 Aplicado filtro de data fim: {data_fim}")
+    
+    # Aplicar filtro por tipos de input se fornecido
+    if tipos_input and len(tipos_input) > 0:
+        if 'Tipo Input' in df.columns:
+            df = df[df['Tipo Input'].isin(tipos_input)]
+            logger.info(f"🔍 Aplicado filtro de Tipo Input: {tipos_input}")
+            logger.info(f"📊 Registros após filtro de Tipo Input: {len(df):,}")
+    
+    # Aplicar filtro por frota de transporte se fornecido
+    if frota_transporte and len(frota_transporte) > 0:
+        if 'Frota transporte' in df.columns:
+            df = df[df['Frota transporte'].isin(frota_transporte)]
+            logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {frota_transporte}")
+            logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
     
     logger.info(f"📊 Registros após filtros: {len(df):,}")
     
@@ -1157,10 +1171,24 @@ def cycles_by_year_month():
         data_inicio = request.args.get('data_inicio')
         data_fim = request.args.get('data_fim')
         
-        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        # Obter parâmetros de tipos de input (pode ser uma lista separada por vírgula)
+        tipos_input_param = request.args.get('tipos_input')
+        tipos_input = None
+        if tipos_input_param:
+            tipos_input = [tipo.strip() for tipo in tipos_input_param.split(',') if tipo.strip()]
         
-        # Usar função com filtros de data
-        result = get_processed_cycles_data(data_inicio, data_fim)
+        # Obter parâmetros de frota de transporte (pode ser uma lista separada por vírgula)
+        frota_transporte_param = request.args.get('frota_transporte')
+        frota_transporte = None
+        if frota_transporte_param:
+            frota_transporte = [frota.strip() for frota in frota_transporte_param.split(',') if frota.strip()]
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte}")
+        
+        # Usar função com filtros de data, tipos de input e frota de transporte
+        result = get_processed_cycles_data(data_inicio, data_fim, tipos_input, frota_transporte)
         
         total_api_time = time.time() - api_start_time
         logger.info(f"✅ API concluída com sucesso!")
