@@ -1,142 +1,309 @@
-# Análise de Ciclos
+# Sistema de Análise de Ciclo - Refatoração para Arquitetura em Camadas
 
-Este projeto Python oferece uma ferramenta para ler e consolidar dados de ciclos a partir de arquivos Excel, apresentando análises interativas através de uma interface web.
+## 📋 Visão Geral
 
-## Funcionalidades
+Este projeto foi refatorado de uma aplicação Flask monolítica para uma arquitetura em camadas usando **FastAPI**, seguindo os princípios do **NestJS** para melhor organização, manutenibilidade e escalabilidade.
 
-- Leitura e união automática de todos os arquivos `.xlsx` presentes na pasta `CicloDetalhado`.
-- Interface web interativa construída com Flask.
-- Visualização de dados através de múltiplos gráficos:
-  - Contagem de ciclos por ano/mês
-  - Ciclos por tipo input
-  - Produção por tipo de atividade (soma de massa)
-  - Produção por especificação de material (soma de massa)
-  - Produção por material (soma de massa)
-  - **🚛 Produtividade (Toneladas)** (total de toneladas por período e produtividade média em ton/h)
-  - **⚙️ Produtividade por Equipamento de Carga** (toneladas/hora por Tag carga - Colunas Empilhadas)
-- Estrutura modular para fácil adição de novas análises e tipos de gráficos.
+## 🏗️ Arquitetura
 
-## Pré-requisitos
+### Estrutura de Camadas
 
-- Python 3.x
-
-## Configuração e Execução
-
-Siga os passos abaixo para configurar e executar o projeto em seu ambiente local:
-
-### 1. Clonar o Repositório (se aplicável)
-
-```bash
-git clone <URL_DO_SEU_REPOSITORIO>
-cd analise_ciclo
+```
+app/
+├── dto/                    # Objetos de Transferência de Dados
+│   ├── __init__.py
+│   └── cycle_dto.py       # DTOs para validação de entrada/saída
+├── repositories/          # Acesso ao banco de dados
+│   ├── __init__.py
+│   └── cycle_repository.py # Repository com cache inteligente
+├── services/             # Regras de negócio
+│   ├── __init__.py
+│   └── cycle_service.py  # Lógica de processamento
+├── controllers/          # Endpoints HTTP
+│   ├── __init__.py
+│   └── cycle_controller.py # Controllers FastAPI
+└── modules/              # Agrupamento organizacional
+    ├── __init__.py
+    └── cycle_module.py   # Módulo que agrupa componentes
 ```
 
-### 2. Criar e Ativar o Ambiente Virtual
+### Responsabilidades por Camada
 
-É altamente recomendável usar um ambiente virtual para gerenciar as dependências do projeto. Isso evita conflitos com outras instalações Python.
+#### 1. **DTOs (Data Transfer Objects)**
 
-**No Windows:**
+- **Responsabilidade**: Validação de entrada e saída de dados
+- **Tecnologia**: Pydantic
+- **Benefícios**: Validação automática, documentação automática da API
+
+#### 2. **Repositories**
+
+- **Responsabilidade**: Acesso aos dados (Excel files)
+- **Funcionalidades**: Cache inteligente, detecção de mudanças de arquivos
+- **Benefícios**: Isolamento da lógica de acesso a dados
+
+#### 3. **Services**
+
+- **Responsabilidade**: Regras de negócio e processamento
+- **Funcionalidades**: Filtros, agregações, cálculos de produtividade
+- **Benefícios**: Lógica de negócio centralizada e reutilizável
+
+#### 4. **Controllers**
+
+- **Responsabilidade**: Definição dos endpoints HTTP
+- **Tecnologia**: FastAPI
+- **Benefícios**: Documentação automática, validação automática
+
+#### 5. **Modules**
+
+- **Responsabilidade**: Agrupamento e configuração de componentes
+- **Funcionalidades**: Dependency injection, singleton pattern
+- **Benefícios**: Organização modular, facilita testes
+
+## 🚀 Como Executar
+
+### 1. Configurar Ambiente Virtual
 
 ```bash
+# Criar ambiente virtual (se não existir)
 python -m venv venv
-.\venv\Scripts\activate
-```
 
-**No macOS/Linux:**
+# Ativar ambiente virtual
+# Windows (PowerShell/CMD):
+venv\Scripts\activate
 
-```bash
-python3 -m venv venv
+# Windows (WSL/Linux):
+source venv/bin/activate
+
+# Linux/macOS:
 source venv/bin/activate
 ```
 
-### 3. Instalar as Dependências
-
-Com o ambiente virtual ativado, instale as bibliotecas necessárias:
+### 2. Instalar Dependências
 
 ```bash
+# Com ambiente virtual ativado
 pip install -r requirements.txt
 ```
 
-### 4. Preparar os Dados
-
-Certifique-se de que seus arquivos Excel (`.xlsx`) estejam localizados na pasta `CicloDetalhado/` dentro do diretório raiz do projeto.
-
-**Nota:** O sistema ignora automaticamente arquivos temporários do Excel (que começam com `~$`) para evitar erros quando arquivos estão abertos.
-
-O script espera que cada arquivo Excel contenha as seguintes colunas:
-
-- `DataHoraInicio`: Data e hora de início do ciclo
-- `Tipo Input`: Tipo do input do ciclo
-- `Massa`: Massa transportada (para relatórios de produção)
-- `Tipo de atividade`: Tipo da atividade realizada
-- `Especificacao de material`: Especificação do material transportado
-- `Material`: Material transportado
-- `Tag carga`: Identificação do equipamento de carga (para relatório de produtividade)
-
-### 5. Executar a Aplicação
-
-Após instalar as dependências e preparar os dados, você pode iniciar a aplicação Flask:
+### 3. Executar a Aplicação
 
 ```bash
-python app.py
+# Com ambiente virtual ativado
+python main.py
 ```
 
-### 6. Acessar a Interface Web
+### 4. Desativar Ambiente Virtual (quando terminar)
 
-Abra seu navegador e acesse:
-
-[http://127.0.0.1:5000](http://127.0.0.1:5000)
-
-## Estrutura do Projeto
-
-```
-analise_ciclo/
-├── CicloDetalhado/             # Contém os arquivos Excel com os dados de ciclo
-│   ├── CicloDetalhadoSLDM_01012024_31122024.xlsx
-│   └── CicloDetalhadoSLDM_01012025_25082025.xlsx
-├── templates/                  # Contém os templates HTML da interface web
-│   └── index.html
-├── static/                     # Contém arquivos estáticos (CSS, JS personalizados, etc.)
-├── app.py                      # Lógica principal da aplicação Flask e rotas da API
-├── requirements.txt            # Lista de dependências do Python
-└── README.md                   # Este arquivo
+```bash
+deactivate
 ```
 
-## Como Adicionar Novas Análises
+## 🔧 Gerenciamento do Ambiente Virtual
 
-Para adicionar novas análises, siga os passos:
+### Comandos Úteis
 
-1.  **No `app.py`:**
+```bash
+# Verificar se o ambiente virtual está ativo
+# O prompt deve mostrar (venv) no início
+(venv) C:\Users\usuario\projeto>
 
-    - Crie uma nova rota `@app.route('/api/sua_nova_analise')`.
-    - Dentro da função, carregue os dados (`df = load_data()`) e realize sua análise com `pandas`.
-    - Retorne os resultados em formato JSON usando `jsonify(seus_dados.to_dict(orient='records'))`.
+# Listar pacotes instalados
+pip list
 
-2.  **No `templates/index.html`:**
-    - Adicione um novo item ao menu (`<li><a href="#" onclick="selecionarAnalise('sua_nova_analise')">Sua Nova Análise</a></li>`).
-    - Na função `selecionarAnalise(tipo)`, adicione uma nova condição para atualizar o título.
-    - Na função `showAnalysis(analysisType)`, adicione um novo `else if (analysisType === 'sua_nova_analise')`.
-    - Dentro deste bloco, faça um `fetch` para sua nova rota de API (`/api/sua_nova_analise`) e use Plotly.js para criar o gráfico desejado com os dados retornados.
+# Atualizar pip
+python -m pip install --upgrade pip
 
-### Exemplos de Análises Disponíveis
+# Gerar requirements.txt atualizado
+pip freeze > requirements.txt
 
-- **Ciclos por Ano/Mês**: Contagem de ciclos agrupados por período
-- **Ciclos por Tipo Input**: Contagem de ciclos segmentados por tipo de input
-- **Produção por Tipo de Atividade**: Soma de massa por tipo de atividade
-- **Produção por Esp. Material**: Soma de massa por especificação de material (top 3 especificações + "Outros")
-- **Produção por Material**: Soma de massa por material (top 3 materiais + "Outros")
-- **🚛 Produtividade (Toneladas)**:
-  - Total de toneladas transportadas por período
-  - **Produtividade média em ton/h** (massa movimentada por hora)
-  - Cálculo baseado em médias diárias e depois médias mensais
-  - Visualização simples e clara com dois eixos
-  - Foco na métrica principal: toneladas e produtividade real (ton/h)
-- **⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)**:
-  - Toneladas por hora por equipamento (baseado na Tag carga)
-  - **Análise DIÁRIA**: Agrupamento por dia para melhor precisão
-  - **Visualização em Colunas Empilhadas**: Mostra contribuição individual de cada equipamento para a produtividade total diária
-  - Comparação de eficiência entre diferentes equipamentos (EH-4031, EH-5018, etc.)
-  - Análise temporal da performance individual de cada equipamento
-  - Identificação de equipamentos mais/menos produtivos
-  - **Cálculo**: Soma da massa por dia ÷ horas operacionais únicas no dia
-  - Filtros automáticos para Tags de carga válidas (exclui "-" e vazios)
+# Remover ambiente virtual (se necessário)
+# Windows:
+rmdir /s venv
+
+# Linux/macOS:
+rm -rf venv
+```
+
+### Estrutura do Ambiente Virtual
+
+```
+venv/
+├── Scripts/              # Windows (activate, python, pip)
+├── bin/                  # Linux/macOS (activate, python, pip)
+├── include/              # Headers Python
+├── lib/                  # Bibliotecas instaladas
+└── pyvenv.cfg           # Configuração do ambiente
+```
+
+### 3. Acessar a Aplicação
+
+- **Interface Web**: http://127.0.0.1:8000
+- **Documentação da API**: http://127.0.0.1:8000/docs
+- **Documentação ReDoc**: http://127.0.0.1:8000/redoc
+- **Health Check**: http://127.0.0.1:8000/health
+
+## 📊 Endpoints da API
+
+### Análise de Ciclos
+
+- `GET /api/cycles_by_year_month` - Ciclos por ano/mês
+- `GET /api/cycles_by_type_input` - Ciclos por tipo de input
+
+### Análise de Produção
+
+- `GET /api/production_by_activity_type` - Produção por tipo de atividade
+
+### Análise de Produtividade
+
+- `GET /api/productivity_analysis` - Análise geral de produtividade
+- `GET /api/productivity_by_equipment` - Produtividade por equipamento
+
+### Gerenciamento de Cache
+
+- `POST /api/clear_cache` - Limpar cache
+- `GET /api/cache_status` - Status do cache
+
+## 🔧 Parâmetros de Filtro
+
+Todos os endpoints suportam os seguintes parâmetros de query:
+
+- `data_inicio` (YYYY-MM-DD): Data de início do período
+- `data_fim` (YYYY-MM-DD): Data de fim do período
+- `tipos_input` (string): Tipos de input separados por vírgula
+- `frota_transporte` (string): Frotas de transporte separadas por vírgula
+
+### Exemplo de Uso
+
+```
+GET /api/cycles_by_year_month?data_inicio=2024-01-01&data_fim=2024-12-31&tipos_input=Minério,Estéril
+```
+
+## 🧪 Benefícios da Refatoração
+
+### 1. **Separação de Responsabilidades**
+
+- Cada camada tem uma responsabilidade bem definida
+- Facilita manutenção e testes
+
+### 2. **Validação Automática**
+
+- Pydantic valida automaticamente entrada e saída
+- Reduz erros de runtime
+
+### 3. **Documentação Automática**
+
+- FastAPI gera documentação interativa automaticamente
+- Swagger UI e ReDoc incluídos
+
+### 4. **Cache Inteligente**
+
+- Repository detecta mudanças nos arquivos Excel
+- Evita reprocessamento desnecessário
+
+### 5. **Tratamento de Erros**
+
+- Exceções centralizadas e padronizadas
+- Logs detalhados para debugging
+
+### 6. **Escalabilidade**
+
+- Arquitetura modular facilita adição de novos recursos
+- Dependency injection permite fácil substituição de componentes
+
+### 7. **Testabilidade**
+
+- Cada camada pode ser testada independentemente
+- Mocks e stubs facilitam testes unitários
+
+## 📈 Melhorias Implementadas
+
+### Performance
+
+- Cache inteligente com detecção de mudanças
+- Processamento otimizado de dados
+- Logs de performance detalhados
+
+### Manutenibilidade
+
+- Código organizado em camadas
+- Nomes consistentes e descritivos
+- Documentação inline
+
+### Robustez
+
+- Validação de entrada rigorosa
+- Tratamento de exceções abrangente
+- Logs estruturados
+
+### Usabilidade
+
+- Documentação automática da API
+- Endpoints RESTful padronizados
+- Respostas JSON consistentes
+
+## 🔄 Migração do Flask para FastAPI
+
+### Principais Mudanças
+
+1. **Framework**: Flask → FastAPI
+2. **Validação**: Manual → Pydantic automática
+3. **Documentação**: Manual → Automática
+4. **Performance**: Síncrono → Assíncrono (quando apropriado)
+5. **Tipagem**: Dinâmica → Estática com type hints
+
+### Compatibilidade
+
+- Todos os endpoints mantêm a mesma funcionalidade
+- Parâmetros de query preservados
+- Respostas JSON mantêm o mesmo formato
+
+## 🛠️ Próximos Passos
+
+### Funcionalidades Sugeridas
+
+1. **Testes Unitários**: Implementar testes para cada camada
+2. **Banco de Dados**: Migrar de Excel para banco relacional
+3. **Autenticação**: Adicionar sistema de autenticação
+4. **Cache Redis**: Implementar cache distribuído
+5. **Monitoramento**: Adicionar métricas e alertas
+
+### Melhorias Técnicas
+
+1. **Async/Await**: Implementar processamento assíncrono
+2. **Background Tasks**: Processamento em background
+3. **Rate Limiting**: Limitar requisições por usuário
+4. **Compressão**: Comprimir respostas grandes
+5. **Caching**: Cache de respostas HTTP
+
+## 📝 Logs e Monitoramento
+
+O sistema inclui logs detalhados para:
+
+- Performance de cada operação
+- Status do cache
+- Erros e exceções
+- Filtros aplicados
+- Quantidade de dados processados
+
+### Exemplo de Log
+
+```
+2024-01-15 10:30:45 - app.services.cycle_service - INFO - 🔄 Processando dados de ciclos por ano/mês...
+2024-01-15 10:30:46 - app.repositories.cycle_repository - INFO - ✅ Usando dados do cache (arquivos não modificados)
+2024-01-15 10:30:47 - app.services.cycle_service - INFO - ✅ Processamento concluído em 1.23s
+2024-01-15 10:30:47 - app.controllers.cycle_controller - INFO - 📊 Dados retornados: 24 períodos
+```
+
+## 🤝 Contribuição
+
+Para contribuir com o projeto:
+
+1. Siga a arquitetura em camadas estabelecida
+2. Mantenha a separação de responsabilidades
+3. Adicione testes para novas funcionalidades
+4. Documente mudanças na API
+5. Mantenha logs detalhados
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.

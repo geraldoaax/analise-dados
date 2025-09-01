@@ -85,12 +85,19 @@
 
       .header-logo {
         height: 40px;
-        width: auto;
+        width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         transition: transform 0.3s ease;
+        border-radius: 8px;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
       }
 
       .header-logo:hover {
         transform: scale(1.05);
+        background-color: var(--hover-bg);
       }
 
       .header h1 {
@@ -478,6 +485,7 @@
 
         .header-logo {
           height: 32px;
+          width: 32px;
         }
 
         .header h1 {
@@ -541,11 +549,16 @@
   <body>
     <div class="header">
       <div class="header-left">
-        <img
-          src="/images/logo-easymine-com-fundo (1).png"
-          alt="Easymine Logo"
-          class="header-logo"
-        />
+        <div class="header-logo">
+          <span
+            style="
+              font-size: 24px;
+              font-weight: bold;
+              color: var(--accent-color);
+            "
+            >📊</span
+          >
+        </div>
         <h1>Easymine Analytics</h1>
       </div>
       <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
@@ -1533,7 +1546,7 @@
                 data.slice(0, 3)
               );
 
-              const x_values = data.map((item) => item.AnoMes);
+              const x_values = data.map((item) => item.ano_mes);
               const y_values = data.map((item) => item.count);
 
               console.log("📊 [FRONTEND] Valores X:", x_values);
@@ -1767,10 +1780,10 @@
 
               // Obter todos os períodos únicos e tipos únicos
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const tipos = [
-                ...new Set(data.map((item) => item["Tipo Input"])),
+                ...new Set(data.map((item) => item.tipo_input)),
               ].sort();
 
               console.log("📊 [FRONTEND] Períodos:", periodos);
@@ -1779,7 +1792,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.count, 0);
               });
 
@@ -1800,7 +1813,7 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo && item["Tipo Input"] === tipo
+                      item.ano_mes === periodo && item.tipo_input === tipo
                   );
                   return registro ? registro.count : 0;
                 });
@@ -2059,12 +2072,12 @@
 
               // Obter todos os períodos únicos e tipos únicos
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
 
               // Ordenar tipos com "Outros" sempre por último
               const tiposTemp = [
-                ...new Set(data.map((item) => item["Tipo de atividade"])),
+                ...new Set(data.map((item) => item.tipo_atividade)),
               ].sort();
               const tiposOrdenados = tiposTemp
                 .filter((t) => t !== "Outros")
@@ -2076,7 +2089,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -2131,8 +2144,7 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo &&
-                      item["Tipo de atividade"] === tipo
+                      item.ano_mes === periodo && item.tipo_atividade === tipo
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -2404,12 +2416,10 @@
 
               // Obter todos os períodos únicos e especificações únicas
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const especificacoesTemp = [
-                ...new Set(
-                  data.map((item) => item["Especificacao de material"])
-                ),
+                ...new Set(data.map((item) => item.especificacao_material)),
               ].sort();
 
               // Ordenar especificações com "Outros" sempre por último
@@ -2428,7 +2438,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -2476,8 +2486,8 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo &&
-                      item["Especificacao de material"] === especificacao
+                      item.ano_mes === periodo &&
+                      item.especificacao_material === especificacao
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -2749,10 +2759,10 @@
 
               // Obter todos os períodos únicos e materiais únicos
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const materiaisTemp = [
-                ...new Set(data.map((item) => item.Material)),
+                ...new Set(data.map((item) => item.material)),
               ].sort();
 
               // Ordenar materiais com "Outros" sempre por último
@@ -2766,7 +2776,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -2811,7 +2821,7 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo && item.Material === material
+                      item.ano_mes === periodo && item.material === material
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -3083,10 +3093,10 @@
 
               // Obter todos os períodos únicos e frotas únicas
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const frotasTemp = [
-                ...new Set(data.map((item) => item["Frota transporte"])),
+                ...new Set(data.map((item) => item.frota_transporte)),
               ].sort();
 
               // Ordenar frotas com "Outros" sempre por último
@@ -3100,7 +3110,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -3145,8 +3155,8 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo &&
-                      item["Frota transporte"] === frota
+                      item.ano_mes === periodo &&
+                      item.frota_transporte === frota
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -3418,10 +3428,10 @@
 
               // Obter todos os períodos únicos e máquinas de carga únicas
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const maquinasCargaTemp = [
-                ...new Set(data.map((item) => item["Tag carga"])),
+                ...new Set(data.map((item) => item.tag_carga)),
               ].sort();
 
               // Ordenar máquinas de carga com "Outros" sempre por último
@@ -3435,7 +3445,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -3480,8 +3490,8 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo &&
-                      item["Tag carga"] === maquinaCarga
+                      item.ano_mes === periodo &&
+                      item.tag_carga === maquinaCarga
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -3755,10 +3765,10 @@
 
               // Obter todos os períodos únicos e frotas de carga únicas
               const periodos = [
-                ...new Set(data.map((item) => item.AnoMes)),
+                ...new Set(data.map((item) => item.ano_mes)),
               ].sort();
               const frotasCargaTemp = [
-                ...new Set(data.map((item) => item["Frota carga"])),
+                ...new Set(data.map((item) => item.frota_carga)),
               ].sort();
 
               // Ordenar frotas de carga com "Outros" sempre por último
@@ -3772,7 +3782,7 @@
               // Calcular totais por período
               const totaisPorPeriodo = periodos.map((periodo) => {
                 return data
-                  .filter((item) => item.AnoMes === periodo)
+                  .filter((item) => item.ano_mes === periodo)
                   .reduce((total, item) => total + item.massa_total, 0);
               });
 
@@ -3817,8 +3827,8 @@
                 const valores = periodos.map((periodo) => {
                   const registro = data.find(
                     (item) =>
-                      item.AnoMes === periodo &&
-                      item["Frota carga"] === frotaCarga
+                      item.ano_mes === periodo &&
+                      item.frota_carga === frotaCarga
                   );
                   return registro ? registro.massa_total : 0;
                 });
@@ -4079,7 +4089,7 @@
               );
 
               // Preparar dados para gráfico simples de produtividade
-              const x_values = data.map((item) => item.AnoMes);
+              const x_values = data.map((item) => item.ano_mes);
               const toneladas_total = data.map((item) => item.toneladas_total);
               const produtividade_ton_h = data.map(
                 (item) => item.produtividade_media_ton_h
