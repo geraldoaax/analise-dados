@@ -337,6 +337,346 @@ class CycleService:
         
         return result
     
+    def get_production_by_material_spec(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produção por especificação de material"""
+        logger.info("🔄 Processando dados de produção por especificação de material...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Especificacao de material', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Especificacao de material', 'Massa', 'Tipo Input'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Agrupando dados por especificação de material...")
+        production_data = df.groupby(['AnoMes', 'Especificacao de material']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        production_data.columns = ['AnoMes', 'especificacao_material', 'massa_total', 'count']
+        
+        # Converter período para string e ordenar
+        production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+        production_data = production_data.sort_values(['AnoMes', 'especificacao_material'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in production_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'especificacao_material': row['especificacao_material'],
+                'massa_total': row['massa_total'],
+                'count': row['count']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de produção por especificação de material concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
+    
+    def get_production_by_material(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produção por material"""
+        logger.info("🔄 Processando dados de produção por material...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Material', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Material', 'Massa', 'Tipo Input'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Agrupando dados por material...")
+        production_data = df.groupby(['AnoMes', 'Material']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        production_data.columns = ['AnoMes', 'material', 'massa_total', 'count']
+        
+        # Converter período para string e ordenar
+        production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+        production_data = production_data.sort_values(['AnoMes', 'material'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in production_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'material': row['material'],
+                'massa_total': row['massa_total'],
+                'count': row['count']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de produção por material concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
+    
+    def get_production_by_frota_transporte(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produção por frota de transporte"""
+        logger.info("🔄 Processando dados de produção por frota de transporte...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Frota transporte', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Frota transporte', 'Massa', 'Tipo Input'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Agrupando dados por frota de transporte...")
+        production_data = df.groupby(['AnoMes', 'Frota transporte']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        production_data.columns = ['AnoMes', 'frota_transporte', 'massa_total', 'count']
+        
+        # Converter período para string e ordenar
+        production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+        production_data = production_data.sort_values(['AnoMes', 'frota_transporte'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in production_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'frota_transporte': row['frota_transporte'],
+                'massa_total': row['massa_total'],
+                'count': row['count']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de produção por frota de transporte concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
+    
+    def get_production_by_frota_carga(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produção por frota de carga"""
+        logger.info("🔄 Processando dados de produção por frota de carga...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Frota carga', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Frota carga', 'Massa', 'Tipo Input'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Agrupando dados por frota de carga...")
+        production_data = df.groupby(['AnoMes', 'Frota carga']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        production_data.columns = ['AnoMes', 'frota_carga', 'massa_total', 'count']
+        
+        # Converter período para string e ordenar
+        production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+        production_data = production_data.sort_values(['AnoMes', 'frota_carga'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in production_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'frota_carga': row['frota_carga'],
+                'massa_total': row['massa_total'],
+                'count': row['count']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de produção por frota de carga concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
+    
+    def get_available_tipos_input(self) -> List[str]:
+        """Obtém a lista de tipos de input disponíveis"""
+        logger.info("🔄 Obtendo tipos de input disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Tipo Input existe
+        if 'Tipo Input' not in df.columns:
+            raise ValueError('Coluna Tipo Input não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Tipo Input'])
+        
+        # Obter tipos únicos
+        tipos_input = df['Tipo Input'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Tipos de input disponíveis obtidos em {process_time:.2f}s")
+        logger.info(f"📊 {len(tipos_input)} tipos de input encontrados")
+        
+        return tipos_input
+    
+    def get_available_frota_transporte(self) -> List[str]:
+        """Obtém a lista de frotas de transporte disponíveis"""
+        logger.info("🔄 Obtendo frotas de transporte disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Frota transporte existe
+        if 'Frota transporte' not in df.columns:
+            raise ValueError('Coluna Frota transporte não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Frota transporte'])
+        
+        # Obter frotas únicas
+        frota_transporte = df['Frota transporte'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Frotas de transporte disponíveis obtidas em {process_time:.2f}s")
+        logger.info(f"📊 {len(frota_transporte)} frotas de transporte encontradas")
+        
+        return frota_transporte
+    
+    def get_available_material_spec(self) -> List[str]:
+        """Obtém a lista de especificações de material disponíveis"""
+        logger.info("🔄 Obtendo especificações de material disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Especificacao de material existe
+        if 'Especificacao de material' not in df.columns:
+            raise ValueError('Coluna Especificacao de material não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Especificacao de material'])
+        
+        # Obter especificações únicas
+        material_spec = df['Especificacao de material'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Especificações de material disponíveis obtidas em {process_time:.2f}s")
+        logger.info(f"📊 {len(material_spec)} especificações de material encontradas")
+        
+        return material_spec
+    
+    def get_available_material(self) -> List[str]:
+        """Obtém a lista de materiais disponíveis"""
+        logger.info("🔄 Obtendo materiais disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Material existe
+        if 'Material' not in df.columns:
+            raise ValueError('Coluna Material não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Material'])
+        
+        # Obter materiais únicos
+        material = df['Material'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Materiais disponíveis obtidos em {process_time:.2f}s")
+        logger.info(f"📊 {len(material)} materiais encontrados")
+        
+        return material
+    
+    def get_available_frota_carga(self) -> List[str]:
+        """Obtém a lista de frotas de carga disponíveis"""
+        logger.info("🔄 Obtendo frotas de carga disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Frota carga existe
+        if 'Frota carga' not in df.columns:
+            raise ValueError('Coluna Frota carga não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Frota carga'])
+        
+        # Obter frotas únicas
+        frota_carga = df['Frota carga'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Frotas de carga disponíveis obtidas em {process_time:.2f}s")
+        logger.info(f"📊 {len(frota_carga)} frotas de carga encontradas")
+        
+        return frota_carga
+    
     def clear_cache(self) -> Dict[str, Any]:
         """Limpa o cache"""
         return self.cycle_repository.clear_cache()

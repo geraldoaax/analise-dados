@@ -8,7 +8,9 @@ from fastapi.responses import JSONResponse
 
 from app.dto.cycle_dto import (CacheStatusDTO, CycleByTypeDTO, CycleDataDTO,
                                DateRangeDTO, EquipmentProductivityDTO,
-                               ErrorResponseDTO, ProductionDataDTO,
+                               ErrorResponseDTO, FrotaTransporteProductionDTO,
+                               MaterialProductionDTO,
+                               MaterialSpecProductionDTO, ProductionDataDTO,
                                ProductivityDataDTO)
 from app.services.cycle_service import CycleService
 
@@ -192,6 +194,296 @@ async def get_production_by_activity_type(
         raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
 
 
+@router.get("/production_by_material_spec", response_model=List[Dict[str, Any]])
+async def get_production_by_material_spec(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produção por especificação de material"""
+    logger.info("🚀 API production_by_material_spec chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
+        # Criar DTO de filtros
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        
+        # Processar dados
+        result = cycle_service.get_production_by_material_spec(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_material_spec concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_material_spec após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/production_by_material", response_model=List[Dict[str, Any]])
+async def get_production_by_material(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produção por material"""
+    logger.info("🚀 API production_by_material chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
+        # Criar DTO de filtros
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        
+        # Processar dados
+        result = cycle_service.get_production_by_material(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_material concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_material após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/production_by_frota_transporte", response_model=List[Dict[str, Any]])
+async def get_production_by_frota_transporte(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produção por frota de transporte"""
+    logger.info("🚀 API production_by_frota_transporte chamada")
+    api_start_time = time.time()
+    
+    try:
+        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
+        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        result = cycle_service.get_production_by_frota_transporte(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_frota_transporte concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_frota_transporte após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/production_by_maquinas_carga", response_model=List[Dict[str, Any]])
+async def get_production_by_maquinas_carga(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produção por máquinas de carga"""
+    logger.info("🚀 API production_by_maquinas_carga chamada")
+    api_start_time = time.time()
+    
+    try:
+        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
+        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        result = cycle_service.get_production_by_maquinas_carga(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_maquinas_carga concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_maquinas_carga após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/production_by_frota_carga", response_model=List[Dict[str, Any]])
+async def get_production_by_frota_carga(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produção por frota de carga"""
+    logger.info("🚀 API production_by_frota_carga chamada")
+    api_start_time = time.time()
+    
+    try:
+        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
+        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        result = cycle_service.get_production_by_frota_carga(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API production_by_frota_carga concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API production_by_frota_carga após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/productivity_toneladas", response_model=List[Dict[str, Any]])
+async def get_productivity_toneladas(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de produtividade em toneladas"""
+    logger.info("🚀 API productivity_toneladas chamada")
+    api_start_time = time.time()
+    
+    try:
+        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
+        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list
+        )
+        
+        result = cycle_service.get_productivity_toneladas(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API productivity_toneladas concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API productivity_toneladas após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
+@router.get("/productivity_by_equipment_carga_stacked", response_model=List[Dict[str, Any]])
+async def get_productivity_by_equipment_carga_stacked(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém produtividade por equipamento de carga em colunas empilhadas"""
+    logger.info("🚀 API productivity_by_equipment_carga_stacked chamada")
+    api_start_time = time.time()
+    
+    try:
+        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=None,
+            frota_transporte=frota_transporte_list
+        )
+        
+        result = cycle_service.get_productivity_by_equipment_carga_stacked(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API productivity_by_equipment_carga_stacked concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} registros")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API productivity_by_equipment_carga_stacked após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")
+
+
 @router.get("/productivity_analysis", response_model=List[ProductivityDataDTO])
 async def get_productivity_analysis(
     data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
@@ -318,4 +610,5 @@ async def get_cache_status(cycle_service: CycleService = Depends(get_cycle_servi
     except Exception as e:
         logger.error(f"❌ Erro ao obter status do cache: {str(e)}")
         logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao obter status do cache: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erro ao obter status do cache: {str(e)}")

@@ -72,7 +72,7 @@ python -m venv venv
 venv\Scripts\activate
 
 # Windows (WSL/Linux):
-source venv/bin/activate
+.\venv\Scripts\activate
 
 # Linux/macOS:
 source venv/bin/activate

@@ -74,6 +74,38 @@ class EquipmentProductivityDTO(BaseModel):
     horas_trabalhadas: float = Field(..., description="Horas trabalhadas")
 
 
+class MaterialSpecProductionDTO(BaseModel):
+    """DTO para produção por especificação de material"""
+    ano_mes: str = Field(..., description="Período no formato YYYY-MM")
+    especificacao_material: str = Field(..., description="Especificação do material")
+    massa_total: float = Field(..., description="Massa total em kg")
+    count: int = Field(..., description="Quantidade de registros")
+
+
+class MaterialProductionDTO(BaseModel):
+    """DTO para produção por material"""
+    ano_mes: str = Field(..., description="Período no formato YYYY-MM")
+    material: str = Field(..., description="Tipo de material")
+    massa_total: float = Field(..., description="Massa total em kg")
+    count: int = Field(..., description="Quantidade de registros")
+
+
+class FrotaTransporteProductionDTO(BaseModel):
+    """DTO para produção por frota de transporte"""
+    ano_mes: str = Field(..., description="Período no formato YYYY-MM")
+    frota_transporte: str = Field(..., description="Frota de transporte")
+    massa_total: float = Field(..., description="Massa total em kg")
+    count: int = Field(..., description="Quantidade de registros")
+
+
+class FrotaCargaProductionDTO(BaseModel):
+    """DTO para produção por frota de carga"""
+    ano_mes: str = Field(..., description="Período no formato YYYY-MM")
+    frota_carga: str = Field(..., description="Frota de carga")
+    massa_total: float = Field(..., description="Massa total em kg")
+    count: int = Field(..., description="Quantidade de registros")
+
+
 class CacheStatusDTO(BaseModel):
     """DTO para status do cache"""
     message: str = Field(..., description="Mensagem de status")

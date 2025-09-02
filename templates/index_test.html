@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Easymine Analytics - Teste JavaScript</title>
+    <style>
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9f6f9;
+        --text-primary: #000000;
+        --text-secondary: #333333;
+        --border-color: #cccccc;
+        --accent-color: #ffcc29;
+        --accent-secondary: #44d1dd;
+        --hover-bg: rgba(255, 204, 41, 0.1);
+      }
+
+      [data-theme="dark"] {
+        --bg-primary: #232333;
+        --bg-secondary: #2c2e41;
+        --text-primary: rgba(249, 246, 249, 0.9);
+        --text-secondary: rgba(249, 246, 249, 0.8);
+        --border-color: rgba(249, 246, 249, 0.1);
+        --hover-bg: rgba(255, 204, 41, 0.2);
+      }
+
+      * {
+        transition: background-color 0.3s ease, color 0.3s ease,
+          border-color 0.3s ease;
+      }
+
+      body {
+        font-family: sans-serif;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        margin: 0;
+        padding: 20px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 20px;
+        border-radius: 8px;
+      }
+
+      .theme-toggle {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+      }
+
+      .theme-toggle:hover {
+        background-color: var(--hover-bg);
+        transform: translateY(-1px);
+      }
+
+      .test-section {
+        background-color: var(--bg-secondary);
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 1px solid var(--border-color);
+      }
+
+      .test-button {
+        background-color: var(--accent-color);
+        color: #000;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 10px 10px 10px 0;
+        transition: all 0.3s ease;
+      }
+
+      .test-button:hover {
+        background-color: #e6b625;
+        transform: translateY(-1px);
+      }
+
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-weight: 500;
+      }
+
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .log {
+        background-color: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div>
+        <h1>🧪 Easymine Analytics - Teste JavaScript</h1>
+      </div>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+        <span id="themeIcon">🌙</span>
+        <span id="themeText">Tema Escuro</span>
+      </button>
+    </div>
+
+    <div class="test-section">
+      <h2>🔧 Testes de Funcionalidade JavaScript</h2>
+      <p>
+        Use os botões abaixo para testar se o JavaScript está funcionando
+        corretamente:
+      </p>
+
+      <button class="test-button" onclick="testBasicJS()">
+        🧪 Teste Básico
+      </button>
+      <button class="test-button" onclick="testConsole()">
+        📝 Teste Console
+      </button>
+      <button class="test-button" onclick="testVariables()">
+        🔄 Teste Variáveis
+      </button>
+      <button class="test-button" onclick="clearLog()">🗑️ Limpar Log</button>
+
+      <div id="statusContainer"></div>
+      <div id="logContainer" class="log"></div>
+    </div>
+
+    <script>
+      // =============== VARIÁVEIS GLOBAIS ===============
+      let testCounter = 0;
+      let tipoAnaliseAtual = "cycles_by_year_month";
+
+      // =============== FUNÇÕES DE TESTE ===============
+      function testBasicJS() {
+        try {
+          testCounter++;
+          logMessage(
+            `✅ Teste Básico #${testCounter}: JavaScript funcionando!`
+          );
+          showStatus("JavaScript está funcionando corretamente!", "success");
+
+          // Testar operações básicas
+          const sum = 2 + 2;
+          const date = new Date().toLocaleString("pt-BR");
+          logMessage(`➡️ Operação matemática: 2 + 2 = ${sum}`);
+          logMessage(`➡️ Data/hora atual: ${date}`);
+
+          return true;
+        } catch (error) {
+          logMessage(`❌ Erro no teste básico: ${error.message}`);
+          showStatus(`Erro: ${error.message}`, "error");
+          return false;
+        }
+      }
+
+      function testConsole() {
+        try {
+          console.log("🔍 Teste de console executado com sucesso");
+          console.warn("⚠️ Teste de warning");
+          console.error("❌ Teste de error (isso é normal)");
+
+          logMessage(
+            "✅ Teste de Console: Funções console.log, console.warn e console.error executadas"
+          );
+          logMessage(
+            "ℹ️ Verifique o Console do navegador (F12) para ver as mensagens"
+          );
+          showStatus(
+            "Teste de console executado! Verifique o Console do navegador (F12)",
+            "success"
+          );
+
+          return true;
+        } catch (error) {
+          logMessage(`❌ Erro no teste de console: ${error.message}`);
+          showStatus(`Erro no console: ${error.message}`, "error");
+          return false;
+        }
+      }
+
+      function testVariables() {
+        try {
+          // Testar diferentes tipos de variáveis
+          const stringVar = "Teste de string";
+          const numberVar = 42;
+          const arrayVar = [1, 2, 3, "teste"];
+          const objectVar = {
+            nome: "Easymine",
+            versao: "1.0",
+            ativo: true,
+          };
+
+          logMessage("✅ Teste de Variáveis:");
+          logMessage(`➡️ String: "${stringVar}"`);
+          logMessage(`➡️ Number: ${numberVar}`);
+          logMessage(`➡️ Array: [${arrayVar.join(", ")}]`);
+          logMessage(`➡️ Object: ${JSON.stringify(objectVar)}`);
+          logMessage(
+            `➡️ Variável global tipoAnaliseAtual: "${tipoAnaliseAtual}"`
+          );
+
+          showStatus("Teste de variáveis executado com sucesso!", "success");
+          return true;
+        } catch (error) {
+          logMessage(`❌ Erro no teste de variáveis: ${error.message}`);
+          showStatus(`Erro nas variáveis: ${error.message}`, "error");
+          return false;
+        }
+      }
+
+      function clearLog() {
+        const logContainer = document.getElementById("logContainer");
+        const statusContainer = document.getElementById("statusContainer");
+
+        if (logContainer) {
+          logContainer.innerHTML = "";
+        }
+        if (statusContainer) {
+          statusContainer.innerHTML = "";
+        }
+
+        testCounter = 0;
+        console.clear();
+        logMessage("🗑️ Log limpo e contador resetado");
+      }
+
+      // =============== FUNÇÕES DE UTILIDADE ===============
+      function logMessage(message) {
+        const timestamp = new Date().toLocaleTimeString("pt-BR");
+        const logContainer = document.getElementById("logContainer");
+
+        if (logContainer) {
+          const logEntry = document.createElement("div");
+          logEntry.textContent = `[${timestamp}] ${message}`;
+          logContainer.appendChild(logEntry);
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        console.log(`[${timestamp}] ${message}`);
+      }
+
+      function showStatus(message, type) {
+        const statusContainer = document.getElementById("statusContainer");
+
+        if (statusContainer) {
+          statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+      }
+
+      // =============== FUNÇÕES DE TEMA ===============
+      function initTheme() {
+        try {
+          const savedTheme = localStorage.getItem("theme") || "light";
+          const prefersDark = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+          ).matches;
+          const theme =
+            savedTheme === "auto"
+              ? prefersDark
+                ? "dark"
+                : "light"
+              : savedTheme;
+
+          document.documentElement.setAttribute("data-theme", theme);
+          updateThemeButton(theme);
+
+          logMessage(`🎨 Tema inicializado: ${theme}`);
+          return true;
+        } catch (error) {
+          logMessage(`❌ Erro ao inicializar tema: ${error.message}`);
+          return false;
+        }
+      }
+
+      function toggleTheme() {
+        try {
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme") || "light";
+          const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+          document.documentElement.setAttribute("data-theme", newTheme);
+          localStorage.setItem("theme", newTheme);
+          updateThemeButton(newTheme);
+
+          logMessage(`🎨 Tema alterado: ${currentTheme} → ${newTheme}`);
+          showStatus(`Tema alterado para: ${newTheme}`, "success");
+          return true;
+        } catch (error) {
+          logMessage(`❌ Erro ao alterar tema: ${error.message}`);
+          showStatus(`Erro no tema: ${error.message}`, "error");
+          return false;
+        }
+      }
+
+      function updateThemeButton(theme) {
+        try {
+          const themeIcon = document.getElementById("themeIcon");
+          const themeText = document.getElementById("themeText");
+
+          if (themeIcon && themeText) {
+            if (theme === "dark") {
+              themeIcon.textContent = "☀️";
+              themeText.textContent = "Tema Claro";
+            } else {
+              themeIcon.textContent = "🌙";
+              themeText.textContent = "Tema Escuro";
+            }
+            return true;
+          } else {
+            throw new Error("Elementos do botão de tema não encontrados");
+          }
+        } catch (error) {
+          logMessage(`❌ Erro ao atualizar botão do tema: ${error.message}`);
+          return false;
+        }
+      }
+
+      // =============== INICIALIZAÇÃO ===============
+      document.addEventListener("DOMContentLoaded", function () {
+        try {
+          logMessage("🚀 DOM carregado, inicializando aplicação...");
+
+          // Inicializar tema
+          const themeResult = initTheme();
+          logMessage(
+            `🎨 Inicialização do tema: ${themeResult ? "Sucesso" : "Falha"}`
+          );
+
+          // Configurar análise padrão
+          tipoAnaliseAtual = "cycles_by_year_month";
+          logMessage(`📊 Análise padrão configurada: ${tipoAnaliseAtual}`);
+
+          // Teste automático básico
+          logMessage("🧪 Executando teste automático...");
+          const autoTest = testBasicJS();
+
+          logMessage(
+            `✅ Aplicação inicializada com ${
+              autoTest ? "sucesso" : "problemas"
+            }`
+          );
+          showStatus(
+            "Aplicação inicializada! Use os botões para testar funcionalidades.",
+            "success"
+          );
+        } catch (error) {
+          logMessage(`❌ Erro crítico na inicialização: ${error.message}`);
+          showStatus(`Erro crítico: ${error.message}`, "error");
+          console.error("Erro na inicialização:", error);
+        }
+      });
+
+      // =============== TRATAMENTO DE ERROS GLOBAIS ===============
+      window.addEventListener("error", function (event) {
+        logMessage(
+          `❌ Erro JavaScript global: ${event.error?.message || event.message}`
+        );
+        console.error("Erro global capturado:", event);
+      });
+
+      window.addEventListener("unhandledrejection", function (event) {
+        logMessage(`❌ Promise rejeitada: ${event.reason}`);
+        console.error("Promise rejeitada:", event);
+      });
+    </script>
+  </body>
+</html>

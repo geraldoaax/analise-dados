@@ -579,7 +579,7 @@
             >
           </li>
           <li>
-            <a href="#" onclick="selecionarAnalise('cycles_by_tipo_input')"
+            <a href="#" onclick="selecionarAnalise('cycles_by_type_input')"
               >Ciclos por Tipo Input</a
             >
           </li>
@@ -615,9 +615,7 @@
             >
           </li>
           <li>
-            <a
-              href="#"
-              onclick="selecionarAnalise('production_by_frota_carga_nova')"
+            <a href="#" onclick="selecionarAnalise('production_by_frota_carga')"
               >🚛 Produção por Frota de Carga</a
             >
           </li>
@@ -795,7 +793,7 @@
         if (tipo === "cycles_by_year_month") {
           menuLinks[0].classList.add("active");
           chartTitleText.textContent = "Ciclos por Ano/Mês";
-        } else if (tipo === "cycles_by_tipo_input") {
+        } else if (tipo === "cycles_by_type_input") {
           menuLinks[1].classList.add("active");
           chartTitleText.textContent = "Ciclos por Tipo Input";
         } else if (tipo === "production_by_activity_type") {
@@ -813,7 +811,7 @@
         } else if (tipo === "production_by_frota_carga") {
           menuLinks[6].classList.add("active");
           chartTitleText.textContent = "⚙️ Produção por Máquinas de Carga";
-        } else if (tipo === "production_by_frota_carga_nova") {
+        } else if (tipo === "production_by_frota_carga") {
           menuLinks[7].classList.add("active");
           chartTitleText.textContent = "🚛 Produção por Frota de Carga";
         } else if (tipo === "productivity_analysis") {
@@ -836,13 +834,13 @@
         if (
           tipo === "cycles_by_year_month" ||
           tipo === "productivity_analysis" ||
-          tipo === "cycles_by_tipo_input" ||
+          tipo === "cycles_by_type_input" ||
           tipo === "production_by_activity_type" ||
           tipo === "production_by_material_spec" ||
           tipo === "production_by_material" ||
           tipo === "production_by_frota_transporte" ||
           tipo === "production_by_frota_carga" ||
-          tipo === "production_by_frota_carga_nova"
+          tipo === "production_by_frota_carga"
         ) {
           filtrosContainer.style.display = "flex";
           filtroTiposInput.style.display = "flex";
@@ -1031,13 +1029,13 @@
         if (
           (tipoAnaliseAtual === "cycles_by_year_month" ||
             tipoAnaliseAtual === "productivity_analysis" ||
-            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
             tipoAnaliseAtual === "production_by_frota_carga" ||
-            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
+            tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1065,13 +1063,13 @@
         if (
           (tipoAnaliseAtual === "cycles_by_year_month" ||
             tipoAnaliseAtual === "productivity_analysis" ||
-            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
             tipoAnaliseAtual === "production_by_frota_carga" ||
-            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
+            tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1217,13 +1215,13 @@
           (tipoAnaliseAtual === "cycles_by_year_month" ||
             tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "productivity_by_equipment" ||
-            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
             tipoAnaliseAtual === "production_by_frota_carga" ||
-            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
+            tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1252,13 +1250,13 @@
           (tipoAnaliseAtual === "cycles_by_year_month" ||
             tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "productivity_by_equipment" ||
-            tipoAnaliseAtual === "cycles_by_tipo_input" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
             tipoAnaliseAtual === "production_by_frota_carga" ||
-            tipoAnaliseAtual === "production_by_frota_carga_nova") &&
+            tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
           atualizarGraficoComFiltro();
@@ -1431,13 +1429,13 @@
         if (
           (analysisType === "cycles_by_year_month" ||
             analysisType === "productivity_analysis" ||
-            analysisType === "cycles_by_tipo_input" ||
+            analysisType === "cycles_by_type_input" ||
             analysisType === "production_by_activity_type" ||
             analysisType === "production_by_material_spec" ||
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_frota_carga" ||
-            analysisType === "production_by_frota_carga_nova") &&
+            analysisType === "production_by_frota_carga") &&
           tiposInputSelecionados.length > 0
         ) {
           params.append("tipos_input", tiposInputSelecionados.join(","));
@@ -1452,13 +1450,13 @@
           (analysisType === "cycles_by_year_month" ||
             analysisType === "productivity_analysis" ||
             analysisType === "productivity_by_equipment" ||
-            analysisType === "cycles_by_tipo_input" ||
+            analysisType === "cycles_by_type_input" ||
             analysisType === "production_by_activity_type" ||
             analysisType === "production_by_material_spec" ||
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_frota_carga" ||
-            analysisType === "production_by_frota_carga_nova") &&
+            analysisType === "production_by_frota_carga") &&
           frotasTransporteSelecionadas.length > 0
         ) {
           params.append(
@@ -1704,7 +1702,7 @@
                  <p><small>Verifique o console para mais detalhes</small></p>
                </div>`;
             });
-        } else if (analysisType === "cycles_by_tipo_input") {
+        } else if (analysisType === "cycles_by_type_input") {
           console.log(
             "🚀 [FRONTEND] Iniciando análise de ciclos por tipo input"
           );
@@ -3687,7 +3685,7 @@
                  <p><small>Verifique o console para mais detalhes</small></p>
                </div>`;
             });
-        } else if (analysisType === "production_by_frota_carga_nova") {
+        } else if (analysisType === "production_by_frota_carga") {
           console.log(
             "🚀 [FRONTEND] Iniciando análise de produção por frota de carga"
           );
