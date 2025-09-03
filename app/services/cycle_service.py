@@ -54,6 +54,13 @@ class CycleService:
                 logger.info(f"🔍 Aplicado filtro de Frota de Transporte: {filters.frota_transporte}")
                 logger.info(f"📊 Registros após filtro de Frota de Transporte: {len(df):,}")
         
+        # Aplicar filtro por frota de carga
+        if filters.frota_carga and len(filters.frota_carga) > 0:
+            if 'Frota carga' in df.columns:
+                df = df[df['Frota carga'].isin(filters.frota_carga)]
+                logger.info(f"🔍 Aplicado filtro de Frota de Carga: {filters.frota_carga}")
+                logger.info(f"📊 Registros após filtro de Frota de Carga: {len(df):,}")
+        
         logger.info(f"📊 Registros após filtros: {len(df):,}")
         
         if len(df) == 0:

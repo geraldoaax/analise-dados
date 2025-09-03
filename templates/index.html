@@ -737,6 +737,35 @@
                 </div>
               </div>
             </div>
+
+            <!-- Filtro de Frota de Carga -->
+            <div class="filter-group-secondary" id="filtroFrotaCarga">
+              <label for="frotaCarga">Filtrar por Frota de Carga:</label>
+              <div class="multiselect-container">
+                <div
+                  class="multiselect-display"
+                  id="frotaCargaDisplay"
+                  onclick="toggleFrotaCargaDropdown()"
+                >
+                  <span id="frotaCargaText">Todas as frotas</span>
+                  <span class="multiselect-arrow">▼</span>
+                </div>
+                <div class="multiselect-dropdown" id="frotaCargaDropdown">
+                  <div class="multiselect-option">
+                    <input
+                      type="checkbox"
+                      id="selectAllFrotasCarga"
+                      onchange="toggleAllFrotasCarga()"
+                      checked
+                    />
+                    <label for="selectAllFrotasCarga">Selecionar Todas</label>
+                  </div>
+                  <div id="frotaCargaOptions">
+                    <!-- Options will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -821,8 +850,9 @@
         const filtroFrotaTransporte = document.getElementById(
           "filtroFrotaTransporte"
         );
+        const filtroFrotaCarga = document.getElementById("filtroFrotaCarga");
 
-        // Relatórios que suportam ambos os filtros (tipos input + frota transporte)
+        // Relatórios que suportam todos os filtros (tipos input + frota transporte + frota carga)
         if (
           tipo === "cycles_by_year_month" ||
           tipo === "productivity_analysis" ||
@@ -837,6 +867,7 @@
           filtrosContainer.style.display = "flex";
           filtroTiposInput.style.display = "flex";
           filtroFrotaTransporte.style.display = "flex";
+          filtroFrotaCarga.style.display = "flex";
 
           // Carregar tipos de input se ainda não foram carregados
           if (tiposInputDisponiveis.length === 0) {
@@ -845,6 +876,10 @@
           // Carregar frotas de transporte se ainda não foram carregadas
           if (frotasTransporteDisponiveis.length === 0) {
             loadFrotasTransporte();
+          }
+          // Carregar frotas de carga se ainda não foram carregadas
+          if (frotasCargaDisponiveis.length === 0) {
+            loadFrotasCarga();
           }
         }
         // Relatórios que suportam apenas frota de transporte
@@ -927,6 +962,12 @@
           ) {
             resetFrotasTransporte();
           }
+          // Limpar filtro de frota de carga se estiver visível
+          if (
+            document.getElementById("filtroFrotaCarga").style.display !== "none"
+          ) {
+            resetFrotasCarga();
+          }
         }
 
         // Resetar estado dos dados carregados
@@ -943,6 +984,10 @@
       // Funções para controle do multiselect de frota de transporte
       let frotasTransporteDisponiveis = [];
       let frotasTransporteSelecionadas = [];
+
+      // Funções para controle do multiselect de frota de carga
+      let frotasCargaDisponiveis = [];
+      let frotasCargaSelecionadas = [];
 
       function loadTiposInput() {
         console.log("🔄 Carregando tipos de input disponíveis...");
@@ -1290,6 +1335,170 @@
         if (arrows[1]) arrows[1].style.transform = "rotate(0deg)";
       }
 
+      // ============= FUNÇÕES PARA FROTA DE CARGA =============
+
+      function loadFrotasCarga() {
+        console.log("🔄 Carregando frotas de carga disponíveis...");
+
+        fetch("/api/frota_carga")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              console.error("❌ Erro ao carregar frotas de carga:", data.error);
+              return;
+            }
+
+            frotasCargaDisponiveis = data;
+            frotasCargaSelecionadas = [...data]; // Selecionar todas por padrão
+
+            console.log(
+              "✅ Frotas de carga carregadas:",
+              frotasCargaDisponiveis
+            );
+            populateFrotasCargaOptions();
+            updateFrotasCargaDisplay();
+          })
+          .catch((error) => {
+            console.error("❌ Erro na requisição de frotas de carga:", error);
+          });
+      }
+
+      function populateFrotasCargaOptions() {
+        const container = document.getElementById("frotaCargaOptions");
+        container.innerHTML = "";
+
+        frotasCargaDisponiveis.forEach((frota) => {
+          const optionDiv = document.createElement("div");
+          optionDiv.className = "multiselect-option";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `frotaCarga-${frota}`;
+          checkbox.value = frota;
+          checkbox.checked = frotasCargaSelecionadas.includes(frota);
+          checkbox.onchange = () => toggleFrotaCarga(frota);
+
+          const label = document.createElement("label");
+          label.htmlFor = `frotaCarga-${frota}`;
+          label.textContent = frota;
+
+          optionDiv.appendChild(checkbox);
+          optionDiv.appendChild(label);
+          container.appendChild(optionDiv);
+        });
+      }
+
+      function toggleFrotaCargaDropdown() {
+        const dropdown = document.getElementById("frotaCargaDropdown");
+        const arrow = document.querySelectorAll(".multiselect-arrow")[2]; // Terceira seta (frota carga)
+
+        if (dropdown.classList.contains("show")) {
+          dropdown.classList.remove("show");
+          arrow.style.transform = "rotate(0deg)";
+        } else {
+          dropdown.classList.add("show");
+          arrow.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function toggleFrotaCarga(frota) {
+        if (frotasCargaSelecionadas.includes(frota)) {
+          frotasCargaSelecionadas = frotasCargaSelecionadas.filter(
+            (f) => f !== frota
+          );
+        } else {
+          frotasCargaSelecionadas.push(frota);
+        }
+
+        updateFrotasCargaDisplay();
+        updateSelectAllFrotasCargaState();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material" ||
+            tipoAnaliseAtual === "production_by_frota_transporte" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function toggleAllFrotasCarga() {
+        const selectAll = document.getElementById("selectAllFrotasCarga");
+
+        if (selectAll.checked) {
+          frotasCargaSelecionadas = [...frotasCargaDisponiveis];
+        } else {
+          frotasCargaSelecionadas = [];
+        }
+
+        // Atualizar checkboxes individuais
+        frotasCargaDisponiveis.forEach((frota) => {
+          const checkbox = document.getElementById(`frotaCarga-${frota}`);
+          if (checkbox) checkbox.checked = selectAll.checked;
+        });
+
+        updateFrotasCargaDisplay();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material" ||
+            tipoAnaliseAtual === "production_by_frota_transporte" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function updateSelectAllFrotasCargaState() {
+        const selectAll = document.getElementById("selectAllFrotasCarga");
+        selectAll.checked =
+          frotasCargaSelecionadas.length === frotasCargaDisponiveis.length;
+      }
+
+      function updateFrotasCargaDisplay() {
+        const displayText = document.getElementById("frotaCargaText");
+
+        if (frotasCargaSelecionadas.length === 0) {
+          displayText.textContent = "Nenhuma frota selecionada";
+        } else if (
+          frotasCargaSelecionadas.length === frotasCargaDisponiveis.length
+        ) {
+          displayText.textContent = "Todas as frotas";
+        } else if (frotasCargaSelecionadas.length === 1) {
+          displayText.textContent = frotasCargaSelecionadas[0];
+        } else {
+          displayText.textContent = `${frotasCargaSelecionadas.length} frotas selecionadas`;
+        }
+      }
+
+      function resetFrotasCarga() {
+        frotasCargaSelecionadas = [...frotasCargaDisponiveis];
+        populateFrotasCargaOptions();
+        updateFrotasCargaDisplay();
+        document.getElementById("selectAllFrotasCarga").checked = true;
+
+        // Fechar dropdown se estiver aberto
+        document.getElementById("frotaCargaDropdown").classList.remove("show");
+        const arrows = document.querySelectorAll(".multiselect-arrow");
+        if (arrows[2]) arrows[2].style.transform = "rotate(0deg)";
+      }
+
       // Fechar dropdown quando clicar fora
       document.addEventListener("click", function (event) {
         // Fechar dropdown de tipos de input
@@ -1312,6 +1521,20 @@
           const arrows = document.querySelectorAll(".multiselect-arrow");
           if (dropdown) dropdown.classList.remove("show");
           if (arrows[1]) arrows[1].style.transform = "rotate(0deg)";
+        }
+
+        // Fechar dropdown de frota de carga
+        const containerFrotaCarga = document
+          .getElementById("frotaCargaDisplay")
+          ?.closest(".multiselect-container");
+        if (
+          containerFrotaCarga &&
+          !containerFrotaCarga.contains(event.target)
+        ) {
+          const dropdown = document.getElementById("frotaCargaDropdown");
+          const arrows = document.querySelectorAll(".multiselect-arrow");
+          if (dropdown) dropdown.classList.remove("show");
+          if (arrows[2]) arrows[2].style.transform = "rotate(0deg)";
         }
       });
 
@@ -1456,8 +1679,29 @@
             "🔍 Filtro de Frota de Transporte aplicado:",
             frotasTransporteSelecionadas
           );
-          console.log(`🎯 Dashboard atual: ${analysisType}`);
         }
+
+        // Adicionar frota de carga para análises que suportam e houver frotas selecionadas
+        if (
+          (analysisType === "cycles_by_year_month" ||
+            analysisType === "productivity_analysis" ||
+            analysisType === "cycles_by_type_input" ||
+            analysisType === "production_by_activity_type" ||
+            analysisType === "production_by_material_spec" ||
+            analysisType === "production_by_material" ||
+            analysisType === "production_by_frota_transporte" ||
+            analysisType === "production_by_maquinas_carga" ||
+            analysisType === "production_by_frota_carga") &&
+          frotasCargaSelecionadas.length > 0
+        ) {
+          params.append("frota_carga", frotasCargaSelecionadas.join(","));
+          console.log(
+            "🔍 Filtro de Frota de Carga aplicado:",
+            frotasCargaSelecionadas
+          );
+        }
+
+        console.log(`🎯 Dashboard atual: ${analysisType}`);
 
         if (params.toString()) {
           url += "?" + params.toString();
@@ -4490,6 +4734,7 @@
         // Carregar tipos de input e frotas de transporte automaticamente
         loadTiposInput();
         loadFrotasTransporte();
+        loadFrotasCarga();
 
         // Configurar análise padrão selecionada
         tipoAnaliseAtual = "cycles_by_year_month";

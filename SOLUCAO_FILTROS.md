@@ -12,27 +12,31 @@ O sistema tinha os seguintes problemas com os filtros dos relatórios:
 
 4. **❌ Duplicação de código**: Havia código duplicado que causava inconsistências na aplicação dos filtros.
 
+5. **❌ Faltava filtro de frota de carga**: O sistema não tinha filtro para a coluna "Frota carga" que é importante para análises.
+
 ## ✅ Solução Implementada
 
 ### 1. **Novos Endpoints de API**
 
-Criados dois novos endpoints para carregar os dados dos filtros:
+Criados três endpoints para carregar os dados dos filtros:
 
 ```python
 @router.get("/tipos_input", response_model=List[str])
 async def get_tipos_input(cycle_service: CycleService = Depends(get_cycle_service)):
     """Obtém lista de tipos de input disponíveis para filtros"""
-    # ... implementação
 
 @router.get("/frota_transporte", response_model=List[str])
 async def get_frota_transporte(cycle_service: CycleService = Depends(get_cycle_service)):
     """Obtém lista de frotas de transporte disponíveis para filtros"""
-    # ... implementação
+
+@router.get("/frota_carga", response_model=List[str])
+async def get_frota_carga(cycle_service: CycleService = Depends(get_cycle_service)):
+    """Obtém lista de frotas de carga disponíveis para filtros"""
 ```
 
 ### 2. **Carregamento Automático dos Filtros**
 
-O frontend agora carrega automaticamente os filtros na inicialização:
+O frontend agora carrega automaticamente todos os filtros na inicialização:
 
 ```javascript
 document.addEventListener("DOMContentLoaded", function () {
@@ -44,6 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Carregar tipos de input e frotas de transporte automaticamente
   loadTiposInput();
   loadFrotasTransporte();
+  loadFrotasCarga();
 
   // Configurar análise padrão selecionada
   tipoAnaliseAtual = "cycles_by_year_month";
@@ -56,6 +61,7 @@ Os filtros agora são aplicados corretamente em todas as análises que os suport
 
 - **Tipos de Input**: Aplicado em análises de produção e ciclos
 - **Frota de Transporte**: Aplicado em análises de produtividade e produção
+- **Frota de Carga**: Aplicado em análises de produção e ciclos
 - **Múltipla Seleção**: Permite selecionar múltiplos valores para cada filtro
 
 ### 4. **Atualização Automática dos Gráficos**
@@ -63,7 +69,7 @@ Os filtros agora são aplicados corretamente em todas as análises que os suport
 Quando os filtros são alterados, os gráficos são atualizados automaticamente:
 
 ```javascript
-function toggleTipoInput(tipo) {
+function toggleFrotaCarga(frota) {
   // ... lógica de toggle
 
   // Atualizar gráfico automaticamente se já tiver dados carregados
@@ -77,7 +83,7 @@ function toggleTipoInput(tipo) {
 
 ### **Fluxo de Funcionamento:**
 
-1. **🚀 Inicialização**: A aplicação carrega automaticamente os filtros disponíveis
+1. **🚀 Inicialização**: A aplicação carrega automaticamente todos os filtros disponíveis
 2. **📊 Seleção de Análise**: Usuário escolhe o tipo de análise desejada
 3. **🔍 Aplicação de Filtros**: Filtros são aplicados aos dados antes de gerar os gráficos
 4. **📈 Geração de Gráficos**: Gráficos são criados com base nos dados filtrados
@@ -86,20 +92,21 @@ function toggleTipoInput(tipo) {
 ### **Filtros Disponíveis:**
 
 - **Tipos de Input**: EMBARCADO, #TIMELINE-ADD, CARGA DE PRODUÇÃO
-- **Frotas de Transporte**: CAT 777F, AROC, XG110
+- **Frotas de Transporte**: CAT 777F, AROCS, XG110
+- **Frotas de Carga**: HITACHI EX 1200, HITACHI EX 2500, CAT 777F, ROMPad 320GC, PANTERA DP1500i, CAT 980 alim
 
 ### **Análises que Suportam Filtros:**
 
-✅ **Ciclos por Ano/Mês** - Ambos os filtros  
-✅ **Ciclos por Tipo Input** - Ambos os filtros  
-✅ **Produção por Tipo de Atividade** - Ambos os filtros  
-✅ **Produção por Esp. Material** - Ambos os filtros  
-✅ **Produção por Material** - Ambos os filtros  
-✅ **Produção por Frota de Transporte** - Ambos os filtros  
-✅ **Produção por Máquinas de Carga** - Ambos os filtros  
-✅ **Produção por Frota de Carga** - Ambos os filtros  
-✅ **Produtividade (Toneladas)** - Ambos os filtros  
-✅ **Produtividade por Equipamento** - Apenas Frota de Transporte
+✅ **Ciclos por Ano/Mês** - Todos os filtros  
+✅ **Ciclos por Tipo Input** - Todos os filtros  
+✅ **Produção por Tipo de Atividade** - Todos os filtros  
+✅ **Produção por Esp. Material** - Todos os filtros  
+✅ **Produção por Material** - Todos os filtros  
+✅ **Produção por Frota de Transporte** - Todos os filtros  
+✅ **Produção por Máquinas de Carga** - Todos os filtros  
+✅ **Produção por Frota de Carga** - Todos os filtros  
+✅ **Produtividade (Toneladas)** - Todos os filtros  
+✅ **Produtividade por Equipamento** - Frota de Transporte + Frota de Carga
 
 ## 🎨 Interface do Usuário
 
@@ -121,14 +128,16 @@ function toggleTipoInput(tipo) {
 ### **Endpoints Testados:**
 
 ```bash
-python teste_filtros.py
+python teste_filtros_completos.py
 ```
 
 **Resultados:**
 
 - ✅ `/api/tipos_input` - 3 tipos retornados
 - ✅ `/api/frota_transporte` - 3 frotas retornadas
+- ✅ `/api/frota_carga` - 7 frotas retornadas
 - ✅ `/health` - Aplicação funcionando corretamente
+- ✅ Endpoint com filtros aplicados - 15 registros retornados
 
 ## 🚀 Benefícios da Solução
 
@@ -139,6 +148,7 @@ python teste_filtros.py
 5. **🌐 Filtros Globais**: Mesmos filtros aplicados em todos os relatórios
 6. **📱 Responsivo**: Funciona bem em desktop e mobile
 7. **🔧 Manutenível**: Código limpo e bem estruturado
+8. **⚙️ Filtro de Frota de Carga**: Novo filtro para análises mais precisas
 
 ## 📝 Próximos Passos
 
@@ -159,5 +169,6 @@ A solução implementada resolve completamente o problema dos combobox dos filtr
 - **Interface intuitiva** com múltipla seleção
 - **Atualização automática** dos gráficos
 - **Consistência** entre todos os relatórios
+- **Novo filtro de frota de carga** para análises mais completas
 
-O sistema agora oferece uma experiência de usuário muito superior, com filtros que funcionam como esperado e permitem análises mais precisas e personalizadas dos dados de produção.
+O sistema agora oferece uma experiência de usuário muito superior, com filtros que funcionam como esperado e permitem análises mais precisas e personalizadas dos dados de produção, incluindo o novo filtro de frota de carga que era solicitado.
