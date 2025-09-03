@@ -626,11 +626,6 @@
               >🚛 Produtividade (Toneladas)</a
             >
           </li>
-          <li>
-            <a href="#" onclick="selecionarAnalise('productivity_by_equipment')"
-              >⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)</a
-            >
-          </li>
           <!-- Add more menu items here -->
         </ul>
       </div>
@@ -819,10 +814,6 @@
         } else if (tipo === "productivity_analysis") {
           menuLinks[8].classList.add("active");
           chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
-        } else if (tipo === "productivity_by_equipment") {
-          menuLinks[9].classList.add("active");
-          chartTitleText.textContent =
-            "⚙️ Produtividade por Equipamento de Carga (Colunas Empilhadas)";
         }
 
         // Mostrar/esconder filtros baseado no tipo de análise

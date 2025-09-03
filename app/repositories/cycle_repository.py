@@ -69,12 +69,9 @@ class CycleRepository:
                     usecols=[
                         'DataHoraInicio', 'Tipo Input', 'Massa', 
                         'Tipo de atividade', 'Especificacao de material', 
-                        'Material', 'Tag carga', 'Frota transporte'
+                        'Material', 'Tag carga', 'Frota carga', 'Frota transporte'
                     ]
                 )
-                
-                # Criar coluna derivada "Frota carga" baseada em "Tag carga"
-                df['Frota carga'] = df['Tag carga']
                 rows = len(df)
                 total_rows += rows
                 df_list.append(df)
