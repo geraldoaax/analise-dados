@@ -610,7 +610,9 @@
             >
           </li>
           <li>
-            <a href="#" onclick="selecionarAnalise('production_by_frota_carga')"
+            <a
+              href="#"
+              onclick="selecionarAnalise('production_by_maquinas_carga')"
               >⚙️ Produção por Máquinas de Carga</a
             >
           </li>
@@ -808,7 +810,7 @@
         } else if (tipo === "production_by_frota_transporte") {
           menuLinks[5].classList.add("active");
           chartTitleText.textContent = "🚛 Produção por Frota de Transporte";
-        } else if (tipo === "production_by_frota_carga") {
+        } else if (tipo === "production_by_maquinas_carga") {
           menuLinks[6].classList.add("active");
           chartTitleText.textContent = "⚙️ Produção por Máquinas de Carga";
         } else if (tipo === "production_by_frota_carga") {
@@ -839,7 +841,7 @@
           tipo === "production_by_material_spec" ||
           tipo === "production_by_material" ||
           tipo === "production_by_frota_transporte" ||
-          tipo === "production_by_frota_carga" ||
+          tipo === "production_by_maquinas_carga" ||
           tipo === "production_by_frota_carga"
         ) {
           filtrosContainer.style.display = "flex";
@@ -1031,10 +1033,10 @@
             tipoAnaliseAtual === "productivity_analysis" ||
             tipoAnaliseAtual === "cycles_by_type_input" ||
             tipoAnaliseAtual === "production_by_activity_type" ||
-            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
             tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
@@ -1068,7 +1070,7 @@
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
             tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
@@ -1434,7 +1436,7 @@
             analysisType === "production_by_material_spec" ||
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
-            analysisType === "production_by_frota_carga" ||
+            analysisType === "production_by_maquinas_carga" ||
             analysisType === "production_by_frota_carga") &&
           tiposInputSelecionados.length > 0
         ) {
@@ -1455,7 +1457,7 @@
             analysisType === "production_by_material_spec" ||
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
-            analysisType === "production_by_frota_carga" ||
+            analysisType === "production_by_maquinas_carga" ||
             analysisType === "production_by_frota_carga") &&
           frotasTransporteSelecionadas.length > 0
         ) {
@@ -3350,7 +3352,7 @@
                  <p><small>Verifique o console para mais detalhes</small></p>
                </div>`;
             });
-        } else if (analysisType === "production_by_frota_carga") {
+        } else if (analysisType === "production_by_maquinas_carga") {
           console.log(
             "🚀 [FRONTEND] Iniciando análise de produção por máquinas de carga"
           );

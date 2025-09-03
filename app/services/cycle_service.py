@@ -557,6 +557,61 @@ class CycleService:
         
         return result
     
+    def get_production_by_maquinas_carga(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produção por máquinas de carga usando Tag carga como legenda"""
+        logger.info("🔄 Processando dados de produção por máquinas de carga...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Tag carga', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Tag carga', 'Massa', 'Tipo Input'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Agrupando dados por Tag carga...")
+        production_data = df.groupby(['AnoMes', 'Tag carga']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        production_data.columns = ['AnoMes', 'tag_carga', 'massa_total', 'count']
+        
+        # Converter período para string e ordenar
+        production_data['AnoMes'] = production_data['AnoMes'].astype(str)
+        production_data = production_data.sort_values(['AnoMes', 'tag_carga'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in production_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'tag_carga': row['tag_carga'],  # Manter consistência com JavaScript
+                'massa_total': row['massa_total'],
+                'count': row['count']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de produção por máquinas de carga concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
+    
     def get_available_tipos_input(self) -> List[str]:
         """Obtém a lista de tipos de input disponíveis"""
         logger.info("🔄 Obtendo tipos de input disponíveis...")
@@ -677,6 +732,30 @@ class CycleService:
         
         return frota_carga
     
+    def get_available_tag_carga(self) -> List[str]:
+        """Obtém a lista de tags de carga disponíveis"""
+        logger.info("🔄 Obtendo tags de carga disponíveis...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se a coluna Tag carga existe
+        if 'Tag carga' not in df.columns:
+            raise ValueError('Coluna Tag carga não encontrada nos dados')
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['Tag carga'])
+        
+        # Obter tags únicas
+        tag_carga = df['Tag carga'].unique().tolist()
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Tags de carga disponíveis obtidas em {process_time:.2f}s")
+        logger.info(f"📊 {len(tag_carga)} tags de carga encontradas")
+        
+        return tag_carga
+    
     def clear_cache(self) -> Dict[str, Any]:
         """Limpa o cache"""
         return self.cycle_repository.clear_cache()
@@ -684,3 +763,5 @@ class CycleService:
     def get_cache_status(self) -> Dict[str, Any]:
         """Obtém status do cache"""
         return self.cycle_repository.get_cache_status()
+    
+
