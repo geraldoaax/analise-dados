@@ -515,7 +515,6 @@
         .menu li {
           margin-bottom: 0;
           min-width: -webkit-fill-available;
-          min-width: fit-content;
         }
 
         .filters-row {
@@ -1027,7 +1026,6 @@
             tipoAnaliseAtual === "production_by_maquinas_carga" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_maquinas_carga" ||
             tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
@@ -1213,7 +1211,6 @@
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga" ||
             tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
@@ -1248,7 +1245,6 @@
             tipoAnaliseAtual === "production_by_material_spec" ||
             tipoAnaliseAtual === "production_by_material" ||
             tipoAnaliseAtual === "production_by_frota_transporte" ||
-            tipoAnaliseAtual === "production_by_frota_carga" ||
             tipoAnaliseAtual === "production_by_frota_carga") &&
           graficoComDados
         ) {
@@ -4488,8 +4484,12 @@
       document.addEventListener("DOMContentLoaded", function () {
         initTheme();
 
-        // Não carregar dados automaticamente
-        console.log("🏠 Aplicação iniciada. Aguardando filtros do usuário...");
+        // Carregar filtros automaticamente na inicialização
+        console.log("🏠 Aplicação iniciada. Carregando filtros...");
+
+        // Carregar tipos de input e frotas de transporte automaticamente
+        loadTiposInput();
+        loadFrotasTransporte();
 
         // Configurar análise padrão selecionada
         tipoAnaliseAtual = "cycles_by_year_month";

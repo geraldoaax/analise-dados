@@ -611,4 +611,49 @@ async def get_cache_status(cycle_service: CycleService = Depends(get_cycle_servi
         logger.error(f"❌ Erro ao obter status do cache: {str(e)}")
         logger.exception("Detalhes do erro:")
         raise HTTPException(status_code=500, detail=f"Erro ao obter status do cache: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erro ao obter status do cache: {str(e)}")
+
+
+@router.get("/tipos_input", response_model=List[str])
+async def get_tipos_input(cycle_service: CycleService = Depends(get_cycle_service)):
+    """Obtém lista de tipos de input disponíveis para filtros"""
+    logger.info("🚀 API tipos_input chamada")
+    api_start_time = time.time()
+    
+    try:
+        result = cycle_service.get_available_tipos_input()
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API tipos_input concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Tipos de input retornados: {len(result)}")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API tipos_input após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao obter tipos de input: {str(e)}")
+
+
+@router.get("/frota_transporte", response_model=List[str])
+async def get_frota_transporte(cycle_service: CycleService = Depends(get_cycle_service)):
+    """Obtém lista de frotas de transporte disponíveis para filtros"""
+    logger.info("🚀 API frota_transporte chamada")
+    api_start_time = time.time()
+    
+    try:
+        result = cycle_service.get_available_frota_transporte()
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API frota_transporte concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Frotas de transporte retornadas: {len(result)}")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API frota_transporte após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao obter frotas de transporte: {str(e)}")
