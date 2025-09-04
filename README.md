@@ -269,11 +269,7 @@ GET /api/cycles_by_year_month?data_inicio=2024-01-01&data_fim=2024-12-31&tipos_i
 
 ### Padrões de Desenvolvimento
 
-- **`PADRAO_FILTROS_COMBOBOX.md`**: Documento completo para implementação de novos filtros de combobox seguindo a arquitetura estabelecida
-- **`EXEMPLO_IMPLEMENTACAO_FILTRO.md`**: Exemplo prático de implementação de filtro para coluna "Local"
-- **`RESUMO_LLM_FILTROS.md`**: Resumo rápido para implementação rápida de filtros pela LLM
-- **`INSTRUCOES_USO_FILTROS.md`**: Instruções completas de uso do sistema de filtros
-- **`INDICE_DOCUMENTACAO.md`**: Índice completo de toda a documentação criada
+- **`docs/PADRAO_FILTROS.md`**: Guia completo para implementação de filtros de combobox seguindo a arquitetura estabelecida. Inclui padrões, exemplos práticos, troubleshooting e checklist de implementação.
 
 ### Melhorias Técnicas
 
