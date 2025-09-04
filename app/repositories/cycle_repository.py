@@ -151,6 +151,66 @@ class CycleRepository:
                            self._cache['files_hash'] == self._get_files_hash())
         }
     
+    def get_available_tipos_input(self) -> list:
+        """Obtém valores únicos da coluna 'Tipo Input' para filtros"""
+        try:
+            df = self.get_raw_data()
+            
+            if 'Tipo Input' not in df.columns:
+                logger.warning("⚠️ Coluna 'Tipo Input' não encontrada nos dados")
+                return []
+            
+            # Obter valores únicos, ordenados e sem valores nulos
+            valores_unicos = df['Tipo Input'].dropna().unique().tolist()
+            valores_unicos.sort()
+            
+            logger.info(f"✅ Valores únicos obtidos para 'Tipo Input': {len(valores_unicos)} valores")
+            return valores_unicos
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos de 'Tipo Input': {str(e)}")
+            return []
+
+    def get_available_frota_transporte(self) -> list:
+        """Obtém valores únicos da coluna 'Frota transporte' para filtros"""
+        try:
+            df = self.get_raw_data()
+            
+            if 'Frota transporte' not in df.columns:
+                logger.warning("⚠️ Coluna 'Frota transporte' não encontrada nos dados")
+                return []
+            
+            # Obter valores únicos, ordenados e sem valores nulos
+            valores_unicos = df['Frota transporte'].dropna().unique().tolist()
+            valores_unicos.sort()
+            
+            logger.info(f"✅ Valores únicos obtidos para 'Frota transporte': {len(valores_unicos)} valores")
+            return valores_unicos
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos de 'Frota transporte': {str(e)}")
+            return []
+
+    def get_available_frota_carga(self) -> list:
+        """Obtém valores únicos da coluna 'Frota carga' para filtros"""
+        try:
+            df = self.get_raw_data()
+            
+            if 'Frota carga' not in df.columns:
+                logger.warning("⚠️ Coluna 'Frota carga' não encontrada nos dados")
+                return []
+            
+            # Obter valores únicos, ordenados e sem valores nulos
+            valores_unicos = df['Frota carga'].dropna().unique().tolist()
+            valores_unicos.sort()
+            
+            logger.info(f"✅ Valores únicos obtidos para 'Frota carga': {len(valores_unicos)} valores")
+            return valores_unicos
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos de 'Frota carga': {str(e)}")
+            return []
+
     def get_available_tag_carga(self) -> list:
         """Obtém valores únicos da coluna 'Tag carga' para filtros"""
         try:

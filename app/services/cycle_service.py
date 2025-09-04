@@ -629,52 +629,26 @@ class CycleService:
         return result
     
     def get_available_tipos_input(self) -> List[str]:
-        """Obtém a lista de tipos de input disponíveis"""
-        logger.info("🔄 Obtendo tipos de input disponíveis...")
-        process_start = time.time()
-        
-        # Obter dados brutos
-        df = self.cycle_repository.get_raw_data()
-        
-        # Verificar se a coluna Tipo Input existe
-        if 'Tipo Input' not in df.columns:
-            raise ValueError('Coluna Tipo Input não encontrada nos dados')
-        
-        # Remover valores nulos
-        df = df.dropna(subset=['Tipo Input'])
-        
-        # Obter tipos únicos
-        tipos_input = df['Tipo Input'].unique().tolist()
-        
-        process_time = time.time() - process_start
-        logger.info(f"✅ Tipos de input disponíveis obtidos em {process_time:.2f}s")
-        logger.info(f"📊 {len(tipos_input)} tipos de input encontrados")
-        
-        return tipos_input
+        """Obtém valores únicos da coluna 'Tipo Input' para filtros"""
+        logger.info("🔄 Obtendo valores únicos da coluna 'Tipo Input'...")
+        try:
+            result = self.cycle_repository.get_available_tipos_input()
+            logger.info(f"✅ Valores únicos obtidos: {len(result)} valores")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos: {str(e)}")
+            return []
     
     def get_available_frota_transporte(self) -> List[str]:
-        """Obtém a lista de frotas de transporte disponíveis"""
-        logger.info("🔄 Obtendo frotas de transporte disponíveis...")
-        process_start = time.time()
-        
-        # Obter dados brutos
-        df = self.cycle_repository.get_raw_data()
-        
-        # Verificar se a coluna Frota transporte existe
-        if 'Frota transporte' not in df.columns:
-            raise ValueError('Coluna Frota transporte não encontrada nos dados')
-        
-        # Remover valores nulos
-        df = df.dropna(subset=['Frota transporte'])
-        
-        # Obter frotas únicas
-        frota_transporte = df['Frota transporte'].unique().tolist()
-        
-        process_time = time.time() - process_start
-        logger.info(f"✅ Frotas de transporte disponíveis obtidas em {process_time:.2f}s")
-        logger.info(f"📊 {len(frota_transporte)} frotas de transporte encontradas")
-        
-        return frota_transporte
+        """Obtém valores únicos da coluna 'Frota transporte' para filtros"""
+        logger.info("🔄 Obtendo valores únicos da coluna 'Frota transporte'...")
+        try:
+            result = self.cycle_repository.get_available_frota_transporte()
+            logger.info(f"✅ Valores únicos obtidos: {len(result)} valores")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos: {str(e)}")
+            return []
     
     def get_available_material_spec(self) -> List[str]:
         """Obtém a lista de especificações de material disponíveis"""
@@ -725,52 +699,159 @@ class CycleService:
         return material
     
     def get_available_frota_carga(self) -> List[str]:
-        """Obtém a lista de frotas de carga disponíveis"""
-        logger.info("🔄 Obtendo frotas de carga disponíveis...")
-        process_start = time.time()
-        
-        # Obter dados brutos
-        df = self.cycle_repository.get_raw_data()
-        
-        # Verificar se a coluna Frota carga existe
-        if 'Frota carga' not in df.columns:
-            raise ValueError('Coluna Frota carga não encontrada nos dados')
-        
-        # Remover valores nulos
-        df = df.dropna(subset=['Frota carga'])
-        
-        # Obter frotas únicas
-        frota_carga = df['Frota carga'].unique().tolist()
-        
-        process_time = time.time() - process_start
-        logger.info(f"✅ Frotas de carga disponíveis obtidas em {process_time:.2f}s")
-        logger.info(f"📊 {len(frota_carga)} frotas de carga encontradas")
-        
-        return frota_carga
+        """Obtém valores únicos da coluna 'Frota carga' para filtros"""
+        logger.info("🔄 Obtendo valores únicos da coluna 'Frota carga'...")
+        try:
+            result = self.cycle_repository.get_available_frota_carga()
+            logger.info(f"✅ Valores únicos obtidos: {len(result)} valores")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos: {str(e)}")
+            return []
     
     def get_available_tag_carga(self) -> List[str]:
-        """Obtém a lista de tags de carga disponíveis"""
-        logger.info("🔄 Obtendo tags de carga disponíveis...")
+        """Obtém valores únicos da coluna 'Tag carga' para filtros"""
+        logger.info("🔄 Obtendo valores únicos da coluna 'Tag carga'...")
+        try:
+            result = self.cycle_repository.get_available_tag_carga()
+            logger.info(f"✅ Valores únicos obtidos: {len(result)} valores")
+            return result
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos: {str(e)}")
+            return []
+    
+    def get_productivity_toneladas(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de produtividade em toneladas"""
+        logger.info("🔄 Processando dados de produtividade em toneladas...")
         process_start = time.time()
         
         # Obter dados brutos
         df = self.cycle_repository.get_raw_data()
         
-        # Verificar se a coluna Tag carga existe
-        if 'Tag carga' not in df.columns:
-            raise ValueError('Coluna Tag carga não encontrada nos dados')
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Massa', 'Tipo Input']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
         
         # Remover valores nulos
-        df = df.dropna(subset=['Tag carga'])
+        df = df.dropna(subset=['DataHoraInicio', 'Massa', 'Tipo Input'])
         
-        # Obter tags únicas
-        tag_carga = df['Tag carga'].unique().tolist()
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Calculando produtividade...")
+        productivity_data = df.groupby('AnoMes').agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        productivity_data.columns = ['AnoMes', 'massa_total', 'count']
+        
+        # Calcular horas trabalhadas (assumindo 24h por dia, 30 dias por mês)
+        productivity_data['horas_trabalhadas'] = 24 * 30
+        
+        # Calcular produtividade em t/h
+        productivity_data['produtividade_media_ton_h'] = (
+            productivity_data['massa_total'] / 1000 / productivity_data['horas_trabalhadas']
+        )
+        
+        # Calcular crescimento percentual
+        productivity_data['crescimento_toneladas_pct'] = productivity_data['massa_total'].pct_change() * 100
+        # Preencher NaN com 0 para o primeiro período
+        productivity_data['crescimento_toneladas_pct'] = productivity_data['crescimento_toneladas_pct'].fillna(0)
+        
+        # Converter período para string e ordenar
+        productivity_data['AnoMes'] = productivity_data['AnoMes'].astype(str)
+        productivity_data = productivity_data.sort_values('AnoMes')
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in productivity_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'toneladas_total': row['massa_total'] / 1000,  # Converter kg para toneladas
+                'produtividade_media_ton_h': row['produtividade_media_ton_h'],
+                'crescimento_toneladas_pct': row['crescimento_toneladas_pct'],
+                'horas_trabalhadas': row['horas_trabalhadas']
+            })
         
         process_time = time.time() - process_start
-        logger.info(f"✅ Tags de carga disponíveis obtidas em {process_time:.2f}s")
-        logger.info(f"📊 {len(tag_carga)} tags de carga encontradas")
+        logger.info(f"✅ Análise de produtividade em toneladas concluída em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} períodos encontrados")
         
-        return tag_carga
+        return result
+    
+    def get_productivity_by_equipment_carga_stacked(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém produtividade por equipamento de carga em colunas empilhadas"""
+        logger.info("🔄 Processando produtividade por equipamento de carga empilhada...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = ['DataHoraInicio', 'Massa', 'Tag carga']
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos
+        df = df.dropna(subset=['DataHoraInicio', 'Massa', 'Tag carga'])
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Calculando produtividade por equipamento...")
+        equipment_data = df.groupby(['AnoMes', 'Tag carga']).agg({
+            'Massa': 'sum',
+            'DataHoraInicio': 'count'
+        }).reset_index()
+        
+        equipment_data.columns = ['AnoMes', 'equipamento', 'massa_total', 'count']
+        
+        # Calcular horas trabalhadas (assumindo 24h por dia, 30 dias por mês)
+        equipment_data['horas_trabalhadas'] = 24 * 30
+        
+        # Calcular produtividade em t/h
+        equipment_data['produtividade_media_ton_h'] = (
+            equipment_data['massa_total'] / 1000 / equipment_data['horas_trabalhadas']
+        )
+        
+        # Converter período para string e ordenar
+        equipment_data['AnoMes'] = equipment_data['AnoMes'].astype(str)
+        equipment_data = equipment_data.sort_values(['AnoMes', 'equipamento'])
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in equipment_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'equipamento': row['equipamento'],
+                'toneladas_total': row['massa_total'] / 1000,  # Converter kg para toneladas
+                'produtividade_media_ton_h': row['produtividade_media_ton_h'],
+                'horas_trabalhadas': row['horas_trabalhadas']
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Produtividade por equipamento de carga empilhada concluída em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} registros encontrados")
+        
+        return result
     
     def clear_cache(self) -> Dict[str, Any]:
         """Limpa o cache"""

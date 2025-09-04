@@ -381,10 +381,24 @@ async def get_production_by_frota_transporte(
     api_start_time = time.time()
     
     try:
-        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
-        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
         frota_carga_list = None
-        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -393,6 +407,12 @@ async def get_production_by_frota_transporte(
             frota_carga=frota_carga_list,
             tag_carga=tag_carga_list
         )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         result = cycle_service.get_production_by_frota_transporte(filters)
         
@@ -425,10 +445,24 @@ async def get_production_by_maquinas_carga(
     api_start_time = time.time()
     
     try:
-        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
-        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
         frota_carga_list = None
-        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -437,6 +471,12 @@ async def get_production_by_maquinas_carga(
             frota_carga=frota_carga_list,
             tag_carga=tag_carga_list
         )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         result = cycle_service.get_production_by_maquinas_carga(filters)
         
@@ -469,10 +509,24 @@ async def get_production_by_frota_carga(
     api_start_time = time.time()
     
     try:
-        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
-        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
         frota_carga_list = None
-        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -481,6 +535,12 @@ async def get_production_by_frota_carga(
             frota_carga=frota_carga_list,
             tag_carga=tag_carga_list
         )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         result = cycle_service.get_production_by_frota_carga(filters)
         
@@ -513,10 +573,24 @@ async def get_productivity_toneladas(
     api_start_time = time.time()
     
     try:
-        tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
-        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
         frota_carga_list = None
-        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -525,6 +599,12 @@ async def get_productivity_toneladas(
             frota_carga=frota_carga_list,
             tag_carga=tag_carga_list
         )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         result = cycle_service.get_productivity_toneladas(filters)
         
@@ -556,9 +636,20 @@ async def get_productivity_by_equipment_carga_stacked(
     api_start_time = time.time()
     
     try:
-        frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
+        # Processar parâmetros
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
         frota_carga_list = None
-        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
@@ -567,6 +658,11 @@ async def get_productivity_by_equipment_carga_stacked(
             frota_carga=frota_carga_list,
             tag_carga=tag_carga_list
         )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         result = cycle_service.get_productivity_by_equipment_carga_stacked(filters)
         
