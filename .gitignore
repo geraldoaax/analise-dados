@@ -219,6 +219,10 @@ temp/
 # *.csv
 # CicloDetalhado/*.xlsx
 
+# Arquivos temporários do Excel
+~$*.xlsx
+~$*.xls
+
 # Arquivos de configuração sensíveis
 config.py
 settings.py

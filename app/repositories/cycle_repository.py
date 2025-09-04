@@ -150,3 +150,23 @@ class CycleRepository:
             'cache_valid': (self._cache['raw_data'] is not None and 
                            self._cache['files_hash'] == self._get_files_hash())
         }
+    
+    def get_available_tag_carga(self) -> list:
+        """Obtém valores únicos da coluna 'Tag carga' para filtros"""
+        try:
+            df = self.get_raw_data()
+            
+            if 'Tag carga' not in df.columns:
+                logger.warning("⚠️ Coluna 'Tag carga' não encontrada nos dados")
+                return []
+            
+            # Obter valores únicos, ordenados e sem valores nulos
+            valores_unicos = df['Tag carga'].dropna().unique().tolist()
+            valores_unicos.sort()
+            
+            logger.info(f"✅ Valores únicos obtidos para 'Tag carga': {len(valores_unicos)} valores")
+            return valores_unicos
+            
+        except Exception as e:
+            logger.error(f"❌ Erro ao obter valores únicos de 'Tag carga': {str(e)}")
+            return []

@@ -766,6 +766,35 @@
                 </div>
               </div>
             </div>
+
+            <!-- Filtro de Tag de Carga -->
+            <div class="filter-group-secondary" id="filtroTagCarga">
+              <label for="tagCarga">Filtrar por Tag de Carga:</label>
+              <div class="multiselect-container">
+                <div
+                  class="multiselect-display"
+                  id="tagCargaDisplay"
+                  onclick="toggleTagCargaDropdown()"
+                >
+                  <span id="tagCargaText">Todas as tags</span>
+                  <span class="multiselect-arrow">▼</span>
+                </div>
+                <div class="multiselect-dropdown" id="tagCargaDropdown">
+                  <div class="multiselect-option">
+                    <input
+                      type="checkbox"
+                      id="selectAllTagsCarga"
+                      onchange="toggleAllTagsCarga()"
+                      checked
+                    />
+                    <label for="selectAllTagsCarga">Selecionar Todas</label>
+                  </div>
+                  <div id="tagCargaOptions">
+                    <!-- Options will be populated dynamically -->
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -988,6 +1017,10 @@
       // Funções para controle do multiselect de frota de carga
       let frotasCargaDisponiveis = [];
       let frotasCargaSelecionadas = [];
+
+      // Funções para controle do multiselect de tag de carga
+      let tagsCargaDisponiveis = [];
+      let tagsCargaSelecionadas = [];
 
       function loadTiposInput() {
         console.log("🔄 Carregando tipos de input disponíveis...");
@@ -1499,6 +1532,166 @@
         if (arrows[2]) arrows[2].style.transform = "rotate(0deg)";
       }
 
+      // ============= FUNÇÕES PARA TAG DE CARGA =============
+
+      function loadTagsCarga() {
+        console.log("🔄 Carregando tags de carga disponíveis...");
+
+        fetch("/api/tag_carga")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              console.error("❌ Erro ao carregar tags de carga:", data.error);
+              return;
+            }
+
+            tagsCargaDisponiveis = data;
+            tagsCargaSelecionadas = [...data]; // Selecionar todas por padrão
+
+            console.log("✅ Tags de carga carregadas:", tagsCargaDisponiveis);
+            populateTagsCargaOptions();
+            updateTagsCargaDisplay();
+          })
+          .catch((error) => {
+            console.error("❌ Erro na requisição de tags de carga:", error);
+          });
+      }
+
+      function populateTagsCargaOptions() {
+        const container = document.getElementById("tagCargaOptions");
+        container.innerHTML = "";
+
+        tagsCargaDisponiveis.forEach((tag) => {
+          const optionDiv = document.createElement("div");
+          optionDiv.className = "multiselect-option";
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.id = `tagCarga-${tag}`;
+          checkbox.value = tag;
+          checkbox.checked = tagsCargaSelecionadas.includes(tag);
+          checkbox.onchange = () => toggleTagCarga(tag);
+
+          const label = document.createElement("label");
+          label.htmlFor = `tagCarga-${tag}`;
+          label.textContent = tag;
+
+          optionDiv.appendChild(checkbox);
+          optionDiv.appendChild(label);
+          container.appendChild(optionDiv);
+        });
+      }
+
+      function toggleTagCargaDropdown() {
+        const dropdown = document.getElementById("tagCargaDropdown");
+        const arrow = document.querySelectorAll(".multiselect-arrow")[3]; // Quarta seta (tag carga)
+
+        if (dropdown.classList.contains("show")) {
+          dropdown.classList.remove("show");
+          arrow.style.transform = "rotate(0deg)";
+        } else {
+          dropdown.classList.add("show");
+          arrow.style.transform = "rotate(180deg)";
+        }
+      }
+
+      function toggleTagCarga(tag) {
+        if (tagsCargaSelecionadas.includes(tag)) {
+          tagsCargaSelecionadas = tagsCargaSelecionadas.filter(
+            (t) => t !== tag
+          );
+        } else {
+          tagsCargaSelecionadas.push(tag);
+        }
+
+        updateTagsCargaDisplay();
+        updateSelectAllTagsCargaState();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material" ||
+            tipoAnaliseAtual === "production_by_frota_transporte" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function toggleAllTagsCarga() {
+        const selectAll = document.getElementById("selectAllTagsCarga");
+
+        if (selectAll.checked) {
+          tagsCargaSelecionadas = [...tagsCargaDisponiveis];
+        } else {
+          tagsCargaSelecionadas = [];
+        }
+
+        // Atualizar checkboxes individuais
+        tagsCargaDisponiveis.forEach((tag) => {
+          const checkbox = document.getElementById(`tagCarga-${tag}`);
+          if (checkbox) checkbox.checked = selectAll.checked;
+        });
+
+        updateTagsCargaDisplay();
+
+        // Atualizar gráfico automaticamente se já tiver dados carregados
+        if (
+          (tipoAnaliseAtual === "cycles_by_year_month" ||
+            tipoAnaliseAtual === "productivity_analysis" ||
+            tipoAnaliseAtual === "cycles_by_type_input" ||
+            tipoAnaliseAtual === "production_by_activity_type" ||
+            tipoAnaliseAtual === "production_by_material_spec" ||
+            tipoAnaliseAtual === "production_by_material" ||
+            tipoAnaliseAtual === "production_by_frota_transporte" ||
+            tipoAnaliseAtual === "production_by_maquinas_carga" ||
+            tipoAnaliseAtual === "production_by_frota_carga") &&
+          graficoComDados
+        ) {
+          atualizarGraficoComFiltro();
+        }
+      }
+
+      function updateSelectAllTagsCargaState() {
+        const selectAll = document.getElementById("selectAllTagsCarga");
+        selectAll.checked =
+          tagsCargaSelecionadas.length === tagsCargaDisponiveis.length;
+      }
+
+      function updateTagsCargaDisplay() {
+        const displayText = document.getElementById("tagCargaText");
+
+        if (tagsCargaSelecionadas.length === 0) {
+          displayText.textContent = "Nenhuma tag selecionada";
+        } else if (
+          tagsCargaSelecionadas.length === tagsCargaDisponiveis.length
+        ) {
+          displayText.textContent = "Todas as tags";
+        } else if (tagsCargaSelecionadas.length === 1) {
+          displayText.textContent = tagsCargaSelecionadas[0];
+        } else {
+          displayText.textContent = `${tagsCargaSelecionadas.length} tags selecionadas`;
+        }
+      }
+
+      function resetTagsCarga() {
+        tagsCargaSelecionadas = [...tagsCargaDisponiveis];
+        populateTagsCargaOptions();
+        updateTagsCargaDisplay();
+        document.getElementById("selectAllTagsCarga").checked = true;
+
+        // Fechar dropdown se estiver aberto
+        document.getElementById("tagCargaDropdown").classList.remove("show");
+        const arrows = document.querySelectorAll(".multiselect-arrow");
+        if (arrows[3]) arrows[3].style.transform = "rotate(0deg)";
+      }
+
       // Fechar dropdown quando clicar fora
       document.addEventListener("click", function (event) {
         // Fechar dropdown de tipos de input
@@ -1698,6 +1891,26 @@
           console.log(
             "🔍 Filtro de Frota de Carga aplicado:",
             frotasCargaSelecionadas
+          );
+        }
+
+        // Adicionar tag de carga para análises que suportam e houver tags selecionadas
+        if (
+          (analysisType === "cycles_by_year_month" ||
+            analysisType === "productivity_analysis" ||
+            analysisType === "cycles_by_type_input" ||
+            analysisType === "production_by_activity_type" ||
+            analysisType === "production_by_material_spec" ||
+            analysisType === "production_by_material" ||
+            analysisType === "production_by_frota_transporte" ||
+            analysisType === "production_by_maquinas_carga" ||
+            analysisType === "production_by_frota_carga") &&
+          tagsCargaSelecionadas.length > 0
+        ) {
+          params.append("tag_carga", tagsCargaSelecionadas.join(","));
+          console.log(
+            "🔍 Filtro de Tag Carga aplicado:",
+            tagsCargaSelecionadas
           );
         }
 
@@ -4731,10 +4944,11 @@
         // Carregar filtros automaticamente na inicialização
         console.log("🏠 Aplicação iniciada. Carregando filtros...");
 
-        // Carregar tipos de input e frotas de transporte automaticamente
+        // Carregar todos os filtros automaticamente na inicialização
         loadTiposInput();
         loadFrotasTransporte();
         loadFrotasCarga();
+        loadTagsCarga(); // Carregar filtro de Tag de Carga
 
         // Configurar análise padrão selecionada
         tipoAnaliseAtual = "cycles_by_year_month";

@@ -267,6 +267,14 @@ GET /api/cycles_by_year_month?data_inicio=2024-01-01&data_fim=2024-12-31&tipos_i
 4. **Cache Redis**: Implementar cache distribuído
 5. **Monitoramento**: Adicionar métricas e alertas
 
+### Padrões de Desenvolvimento
+
+- **`PADRAO_FILTROS_COMBOBOX.md`**: Documento completo para implementação de novos filtros de combobox seguindo a arquitetura estabelecida
+- **`EXEMPLO_IMPLEMENTACAO_FILTRO.md`**: Exemplo prático de implementação de filtro para coluna "Local"
+- **`RESUMO_LLM_FILTROS.md`**: Resumo rápido para implementação rápida de filtros pela LLM
+- **`INSTRUCOES_USO_FILTROS.md`**: Instruções completas de uso do sistema de filtros
+- **`INDICE_DOCUMENTACAO.md`**: Índice completo de toda a documentação criada
+
 ### Melhorias Técnicas
 
 1. **Async/Await**: Implementar processamento assíncrono

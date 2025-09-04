@@ -12,6 +12,7 @@ class DateRangeDTO(BaseModel):
     tipos_input: Optional[List[str]] = Field(None, description="Lista de tipos de input para filtrar")
     frota_transporte: Optional[List[str]] = Field(None, description="Lista de frotas de transporte para filtrar")
     frota_carga: Optional[List[str]] = Field(None, description="Lista de frotas de carga para filtrar")
+    tag_carga: Optional[List[str]] = Field(None, description="Lista de valores da coluna 'Tag Carga' para filtrar")
 
     @validator('data_inicio', 'data_fim')
     def validate_date_format(cls, v):

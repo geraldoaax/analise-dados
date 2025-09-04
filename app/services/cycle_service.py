@@ -61,6 +61,15 @@ class CycleService:
                 logger.info(f"🔍 Aplicado filtro de Frota de Carga: {filters.frota_carga}")
                 logger.info(f"📊 Registros após filtro de Frota de Carga: {len(df):,}")
         
+        # Aplicar filtro por tag de carga
+        if filters.tag_carga and len(filters.tag_carga) > 0:
+            if 'Tag carga' in df.columns:
+                df = df[df['Tag carga'].isin(filters.tag_carga)]
+                logger.info(f"🔍 Aplicado filtro de Tag de Carga: {filters.tag_carga}")
+                logger.info(f"📊 Registros após filtro de Tag de Carga: {len(df):,}")
+            else:
+                logger.warning("⚠️ Coluna 'Tag carga' não encontrada para aplicar filtro")
+        
         logger.info(f"📊 Registros após filtros: {len(df):,}")
         
         if len(df) == 0:

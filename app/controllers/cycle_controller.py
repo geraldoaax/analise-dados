@@ -32,6 +32,7 @@ async def get_cycles_by_year_month(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de ciclos por ano/mês"""
@@ -52,19 +53,25 @@ async def get_cycles_by_year_month(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_cycles_by_year_month(filters)
@@ -106,6 +113,7 @@ async def get_cycles_by_type_input(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de ciclos por tipo de input"""
@@ -126,19 +134,25 @@ async def get_cycles_by_type_input(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_cycles_by_type_input(filters)
@@ -164,6 +178,7 @@ async def get_production_by_activity_type(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por tipo de atividade"""
@@ -184,19 +199,25 @@ async def get_production_by_activity_type(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_production_by_activity_type(filters)
@@ -222,6 +243,7 @@ async def get_production_by_material_spec(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por especificação de material"""
@@ -242,19 +264,25 @@ async def get_production_by_material_spec(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_production_by_material_spec(filters)
@@ -280,6 +308,7 @@ async def get_production_by_material(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por material"""
@@ -300,19 +329,25 @@ async def get_production_by_material(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_production_by_material(filters)
@@ -338,6 +373,7 @@ async def get_production_by_frota_transporte(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por frota de transporte"""
@@ -348,12 +384,14 @@ async def get_production_by_frota_transporte(
         tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
         frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
         frota_carga_list = None
+        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         result = cycle_service.get_production_by_frota_transporte(filters)
@@ -379,6 +417,7 @@ async def get_production_by_maquinas_carga(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por máquinas de carga"""
@@ -389,12 +428,14 @@ async def get_production_by_maquinas_carga(
         tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
         frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
         frota_carga_list = None
+        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         result = cycle_service.get_production_by_maquinas_carga(filters)
@@ -420,6 +461,7 @@ async def get_production_by_frota_carga(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produção por frota de carga"""
@@ -430,12 +472,14 @@ async def get_production_by_frota_carga(
         tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
         frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
         frota_carga_list = None
+        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         result = cycle_service.get_production_by_frota_carga(filters)
@@ -461,6 +505,7 @@ async def get_productivity_toneladas(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém dados de produtividade em toneladas"""
@@ -471,12 +516,14 @@ async def get_productivity_toneladas(
         tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',')] if tipos_input else None
         frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
         frota_carga_list = None
+        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         result = cycle_service.get_productivity_toneladas(filters)
@@ -501,6 +548,7 @@ async def get_productivity_by_equipment_carga_stacked(
     data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém produtividade por equipamento de carga em colunas empilhadas"""
@@ -510,12 +558,14 @@ async def get_productivity_by_equipment_carga_stacked(
     try:
         frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',')] if frota_transporte else None
         frota_carga_list = None
+        tag_carga_list = [tag.strip() for tag in tag_carga.split(',')] if tag_carga else None
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=None,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         result = cycle_service.get_productivity_by_equipment_carga_stacked(filters)
@@ -541,6 +591,7 @@ async def get_productivity_analysis(
     tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém análise de produtividade"""
@@ -561,19 +612,25 @@ async def get_productivity_analysis(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=tipos_input_list,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_productivity_analysis(filters)
@@ -598,6 +655,7 @@ async def get_productivity_by_equipment(
     data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
     frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
     frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
     cycle_service: CycleService = Depends(get_cycle_service)
 ):
     """Obtém produtividade por equipamento"""
@@ -614,18 +672,24 @@ async def get_productivity_by_equipment(
         if frota_carga:
             frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
         
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
         # Criar DTO de filtros
         filters = DateRangeDTO(
             data_inicio=data_inicio,
             data_fim=data_fim,
             tipos_input=None,
             frota_transporte=frota_transporte_list,
-            frota_carga=frota_carga_list
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
         )
         
         logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
         logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
         logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
         
         # Processar dados
         result = cycle_service.get_productivity_by_equipment(filters)
@@ -744,3 +808,26 @@ async def get_frota_carga(cycle_service: CycleService = Depends(get_cycle_servic
         logger.error(f"❌ Erro na API frota_carga após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         raise HTTPException(status_code=500, detail=f"Erro ao obter frotas de carga: {str(e)}")
+
+
+@router.get("/tag_carga", response_model=List[str])
+async def get_tag_carga(cycle_service: CycleService = Depends(get_cycle_service)):
+    """Obtém lista de tags de carga disponíveis para filtros"""
+    logger.info("🚀 API tag_carga chamada")
+    api_start_time = time.time()
+    
+    try:
+        result = cycle_service.get_available_tag_carga()
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API tag_carga concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Tags de carga retornadas: {len(result)}")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API tag_carga após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao obter tags de carga: {str(e)}")
