@@ -69,7 +69,9 @@ class CycleRepository:
                     usecols=[
                         'DataHoraInicio', 'Tipo Input', 'Massa', 
                         'Tipo de atividade', 'Especificacao de material', 
-                        'Material', 'Tag carga', 'Frota carga', 'Frota transporte'
+                        'Material', 'Tag carga', 'Frota carga', 'Frota transporte',
+                        'Operando vazio', 'Fila carga', 'Manobra carga', 'Carga',
+                        'Operando cheio', 'Fila Descarga', 'Manobra descarga', 'Descarga'
                     ]
                 )
                 rows = len(df)

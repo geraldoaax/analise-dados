@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 
 from app.dto.cycle_dto import (CacheStatusDTO, CycleByTypeDTO, CycleDataDTO,
-                               DateRangeDTO, EquipmentProductivityDTO,
-                               ErrorResponseDTO, FrotaTransporteProductionDTO,
+                               CycleTimeDataDTO, DateRangeDTO,
+                               EquipmentProductivityDTO, ErrorResponseDTO,
+                               FrotaTransporteProductionDTO,
                                MaterialProductionDTO,
                                MaterialSpecProductionDTO, ProductionDataDTO,
                                ProductivityDataDTO)
@@ -927,3 +928,68 @@ async def get_tag_carga(cycle_service: CycleService = Depends(get_cycle_service)
         logger.error(f"❌ Erro na API tag_carga após {error_time:.2f}s: {str(e)}")
         logger.exception("Detalhes do erro:")
         raise HTTPException(status_code=500, detail=f"Erro ao obter tags de carga: {str(e)}")
+
+
+@router.get("/cycle_time_stacked", response_model=List[CycleTimeDataDTO])
+async def get_cycle_time_stacked(
+    data_inicio: Optional[str] = Query(None, description="Data de início (YYYY-MM-DD)"),
+    data_fim: Optional[str] = Query(None, description="Data de fim (YYYY-MM-DD)"),
+    tipos_input: Optional[str] = Query(None, description="Tipos de input separados por vírgula"),
+    frota_transporte: Optional[str] = Query(None, description="Frotas de transporte separadas por vírgula"),
+    frota_carga: Optional[str] = Query(None, description="Frotas de carga separadas por vírgula"),
+    tag_carga: Optional[str] = Query(None, description="Tags de carga separadas por vírgula"),
+    cycle_service: CycleService = Depends(get_cycle_service)
+):
+    """Obtém dados de tempo de ciclo empilhado pela média mensal"""
+    logger.info("🚀 API cycle_time_stacked chamada")
+    api_start_time = time.time()
+    
+    try:
+        # Processar parâmetros
+        tipos_input_list = None
+        if tipos_input:
+            tipos_input_list = [tipo.strip() for tipo in tipos_input.split(',') if tipo.strip()]
+        
+        frota_transporte_list = None
+        if frota_transporte:
+            frota_transporte_list = [frota.strip() for frota in frota_transporte.split(',') if frota.strip()]
+        
+        frota_carga_list = None
+        if frota_carga:
+            frota_carga_list = [frota.strip() for frota in frota_carga.split(',') if frota.strip()]
+        
+        tag_carga_list = None
+        if tag_carga:
+            tag_carga_list = [tag.strip() for tag in tag_carga.split(',') if tag.strip()]
+        
+        # Criar DTO de filtros
+        filters = DateRangeDTO(
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            tipos_input=tipos_input_list,
+            frota_transporte=frota_transporte_list,
+            frota_carga=frota_carga_list,
+            tag_carga=tag_carga_list
+        )
+        
+        logger.info(f"📅 Filtros recebidos - Início: {data_inicio}, Fim: {data_fim}")
+        logger.info(f"🔍 Filtro Tipos Input: {tipos_input_list}")
+        logger.info(f"🔍 Filtro Frota Transporte: {frota_transporte_list}")
+        logger.info(f"🔍 Filtro Frota Carga: {frota_carga_list}")
+        logger.info(f"🔍 Filtro Tag Carga: {tag_carga_list}")
+        
+        # Processar dados
+        result = cycle_service.get_cycle_time_stacked(filters)
+        
+        total_api_time = time.time() - api_start_time
+        logger.info(f"✅ API cycle_time_stacked concluída com sucesso!")
+        logger.info(f"⏱️  Tempo total da API: {total_api_time:.2f}s")
+        logger.info(f"📊 Dados retornados: {len(result)} períodos")
+        
+        return result
+    
+    except Exception as e:
+        error_time = time.time() - api_start_time
+        logger.error(f"❌ Erro na API cycle_time_stacked após {error_time:.2f}s: {str(e)}")
+        logger.exception("Detalhes do erro:")
+        raise HTTPException(status_code=500, detail=f"Erro ao processar dados: {str(e)}")

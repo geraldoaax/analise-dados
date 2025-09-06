@@ -861,4 +861,128 @@ class CycleService:
         """Obtém status do cache"""
         return self.cycle_repository.get_cache_status()
     
+    def _convert_time_to_minutes(self, time_str):
+        """Converte tempo no formato HH:MM:SS para minutos (float)"""
+        try:
+            if pd.isna(time_str) or time_str == '' or time_str == '00:00:00':
+                return 0.0
+            
+            # Se já é numérico, retornar como está
+            if isinstance(time_str, (int, float)):
+                return float(time_str)
+            
+            # Converter string para minutos
+            time_str = str(time_str).strip()
+            
+            # Tratar diferentes formatos de tempo
+            if ':' in time_str:
+                # Formato HH:MM:SS ou MM:SS
+                parts = time_str.split(':')
+                if len(parts) == 3:  # HH:MM:SS
+                    hours, minutes, seconds = map(float, parts)
+                    return hours * 60 + minutes + seconds / 60
+                elif len(parts) == 2:  # MM:SS
+                    minutes, seconds = map(float, parts)
+                    return minutes + seconds / 60
+            else:
+                # Tentar converter diretamente para float
+                return float(time_str)
+                
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.warning(f"⚠️ Erro ao converter tempo '{time_str}': {e}. Usando 0.")
+            return 0.0
+    
+    def get_cycle_time_stacked(self, filters: DateRangeDTO) -> List[Dict[str, Any]]:
+        """Obtém dados de tempo de ciclo empilhado pela média mensal"""
+        logger.info("🔄 Processando dados de tempo de ciclo empilhado...")
+        process_start = time.time()
+        
+        # Obter dados brutos
+        df = self.cycle_repository.get_raw_data()
+        
+        # Verificar se as colunas necessárias existem
+        required_columns = [
+            'DataHoraInicio', 'Operando vazio', 'Fila carga', 'Manobra carga', 'Carga',
+            'Operando cheio', 'Fila Descarga', 'Manobra descarga', 'Descarga'
+        ]
+        for col in required_columns:
+            if col not in df.columns:
+                raise ValueError(f'Coluna {col} não encontrada nos dados')
+        
+        # Aplicar filtros
+        df = self._apply_filters(df, filters)
+        
+        if len(df) == 0:
+            return []
+        
+        # Remover valores nulos nas colunas de tempo
+        time_columns = [
+            'Operando vazio', 'Fila carga', 'Manobra carga', 'Carga',
+            'Operando cheio', 'Fila Descarga', 'Manobra descarga', 'Descarga'
+        ]
+        df = df.dropna(subset=['DataHoraInicio'] + time_columns)
+        
+        # Converter colunas de tempo de string para minutos (numérico)
+        logger.info("🔄 Convertendo tempos de string para minutos...")
+        for col in time_columns:
+            if col in df.columns:
+                # Converter tempo no formato HH:MM:SS para minutos
+                df[col] = df[col].apply(self._convert_time_to_minutes)
+        
+        # Processar dados
+        logger.info("📅 Criando períodos...")
+        df['AnoMes'] = df['DataHoraInicio'].dt.to_period('M')
+        
+        logger.info("📊 Calculando tempos médios de ciclo por mês...")
+        
+        # Calcular médias mensais para cada fase do ciclo
+        cycle_time_data = df.groupby('AnoMes').agg({
+            'Operando vazio': 'mean',
+            'Fila carga': 'mean',
+            'Manobra carga': 'mean',
+            'Carga': 'mean',
+            'Operando cheio': 'mean',
+            'Fila Descarga': 'mean',
+            'Manobra descarga': 'mean',
+            'Descarga': 'mean'
+        }).reset_index()
+        
+        # Calcular tempo total do ciclo (soma de todas as fases)
+        cycle_time_data['total_ciclo'] = (
+            cycle_time_data['Operando vazio'] +
+            cycle_time_data['Fila carga'] +
+            cycle_time_data['Manobra carga'] +
+            cycle_time_data['Carga'] +
+            cycle_time_data['Operando cheio'] +
+            cycle_time_data['Fila Descarga'] +
+            cycle_time_data['Manobra descarga'] +
+            cycle_time_data['Descarga']
+        )
+        
+        # Converter período para string e ordenar
+        cycle_time_data['AnoMes'] = cycle_time_data['AnoMes'].astype(str)
+        cycle_time_data = cycle_time_data.sort_values('AnoMes')
+        
+        # Mapear campos para o formato esperado pelo DTO
+        result = []
+        for _, row in cycle_time_data.iterrows():
+            result.append({
+                'ano_mes': row['AnoMes'],
+                'operando_vazio': round(row['Operando vazio'], 2),
+                'fila_carga': round(row['Fila carga'], 2),
+                'manobra_carga': round(row['Manobra carga'], 2),
+                'carga': round(row['Carga'], 2),
+                'operando_cheio': round(row['Operando cheio'], 2),
+                'fila_descarga': round(row['Fila Descarga'], 2),
+                'manobra_descarga': round(row['Manobra descarga'], 2),
+                'descarga': round(row['Descarga'], 2),
+                'total_ciclo': round(row['total_ciclo'], 2)
+            })
+        
+        process_time = time.time() - process_start
+        logger.info(f"✅ Processamento de tempo de ciclo empilhado concluído em {process_time:.2f}s")
+        logger.info(f"📊 {len(result)} períodos encontrados")
+        
+        return result
+    
 

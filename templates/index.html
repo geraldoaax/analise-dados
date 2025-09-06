@@ -625,6 +625,11 @@
               >🚛 Produtividade (Toneladas)</a
             >
           </li>
+          <li>
+            <a href="#" onclick="selecionarAnalise('cycle_time_stacked')"
+              >⏱️ Tempo de Ciclo Empilhado</a
+            >
+          </li>
           <!-- Add more menu items here -->
         </ul>
       </div>
@@ -871,6 +876,9 @@
         } else if (tipo === "productivity_analysis") {
           menuLinks[8].classList.add("active");
           chartTitleText.textContent = "🚛 Produtividade (Toneladas)";
+        } else if (tipo === "cycle_time_stacked") {
+          menuLinks[9].classList.add("active");
+          chartTitleText.textContent = "⏱️ Tempo de Ciclo Empilhado";
         }
 
         // Mostrar/esconder filtros baseado no tipo de análise
@@ -891,7 +899,8 @@
           tipo === "production_by_material" ||
           tipo === "production_by_frota_transporte" ||
           tipo === "production_by_maquinas_carga" ||
-          tipo === "production_by_frota_carga"
+          tipo === "production_by_frota_carga" ||
+          tipo === "cycle_time_stacked"
         ) {
           filtrosContainer.style.display = "flex";
           filtroTiposInput.style.display = "flex";
@@ -1840,7 +1849,8 @@
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_maquinas_carga" ||
-            analysisType === "production_by_frota_carga") &&
+            analysisType === "production_by_frota_carga" ||
+            analysisType === "cycle_time_stacked") &&
           tiposInputSelecionados.length > 0
         ) {
           params.append("tipos_input", tiposInputSelecionados.join(","));
@@ -1861,7 +1871,8 @@
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_maquinas_carga" ||
-            analysisType === "production_by_frota_carga") &&
+            analysisType === "production_by_frota_carga" ||
+            analysisType === "cycle_time_stacked") &&
           frotasTransporteSelecionadas.length > 0
         ) {
           params.append(
@@ -1884,7 +1895,8 @@
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_maquinas_carga" ||
-            analysisType === "production_by_frota_carga") &&
+            analysisType === "production_by_frota_carga" ||
+            analysisType === "cycle_time_stacked") &&
           frotasCargaSelecionadas.length > 0
         ) {
           params.append("frota_carga", frotasCargaSelecionadas.join(","));
@@ -1904,7 +1916,8 @@
             analysisType === "production_by_material" ||
             analysisType === "production_by_frota_transporte" ||
             analysisType === "production_by_maquinas_carga" ||
-            analysisType === "production_by_frota_carga") &&
+            analysisType === "production_by_frota_carga" ||
+            analysisType === "cycle_time_stacked") &&
           tagsCargaSelecionadas.length > 0
         ) {
           params.append("tag_carga", tagsCargaSelecionadas.join(","));
@@ -4933,6 +4946,333 @@
                  <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
                  <p><small>Verifique o console para mais detalhes</small></p>
                </div>`;
+            });
+        } else if (analysisType === "cycle_time_stacked") {
+          console.log(
+            "🚀 [FRONTEND] Iniciando análise de tempo de ciclo empilhado"
+          );
+          const startTime = performance.now();
+
+          // Limpar o gráfico e mostrar carregamento
+          document.getElementById("chart").innerHTML =
+            '<div style="text-align: center; padding: 50px;"><div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 20px; color: #666;">Carregando dados de tempo de ciclo empilhado...</p></div>';
+
+          fetch(url)
+            .then((response) => {
+              const fetchTime = performance.now() - startTime;
+              console.log(
+                `📡 [FRONTEND] Resposta recebida em ${fetchTime.toFixed(2)}ms`
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Erro HTTP: ${response.status} - ${response.statusText}`
+                );
+              }
+              return response.json();
+            })
+            .then((data) => {
+              const parseTime = performance.now() - startTime;
+              console.log(
+                `📊 [FRONTEND] Dados parseados em ${parseTime.toFixed(2)}ms`
+              );
+              console.log("📊 [FRONTEND] Dados recebidos:", data);
+
+              if (!data || data.length === 0) {
+                throw new Error(
+                  "Nenhum dado encontrado para o período selecionado"
+                );
+              }
+
+              // Preparar dados para o gráfico empilhado
+              const meses = data.map((item) => item.ano_mes);
+              const operandoVazio = data.map((item) => item.operando_vazio);
+              const filaCarga = data.map((item) => item.fila_carga);
+              const manobraCarga = data.map((item) => item.manobra_carga);
+              const carga = data.map((item) => item.carga);
+              const operandoCheio = data.map((item) => item.operando_cheio);
+              const filaDescarga = data.map((item) => item.fila_descarga);
+              const manobraDescarga = data.map((item) => item.manobra_descarga);
+              const descarga = data.map((item) => item.descarga);
+
+              // Obter cores do tema atual - CORRIGIDO
+              const currentTheme =
+                document.documentElement.getAttribute("data-theme") || "light";
+              const themeColors = getThemeColors(currentTheme);
+
+              // Paleta de cores bem diferenciadas para fases do ciclo
+              const cycleColors = [
+                "#E74C3C", // Operando Vazio - Vermelho forte
+                "#2980B9", // Fila Carga - Azul escuro
+                "#27AE60", // Manobra Carga - Verde escuro
+                "#D35400", // Carga - Laranja escuro
+                "#8E44AD", // Operando Cheio - Roxo escuro
+                "#16A085", // Fila Descarga - Verde água escuro
+                "#C0392B", // Manobra Descarga - Vermelho escuro
+                "#F39C12", // Descarga - Amarelo laranja
+              ];
+
+              // Criar traces para cada fase do ciclo
+              const traces = [
+                {
+                  x: meses,
+                  y: operandoVazio,
+                  type: "bar",
+                  name: "Operando Vazio",
+                  marker: {
+                    color: cycleColors[0],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Operando Vazio</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: filaCarga,
+                  type: "bar",
+                  name: "Fila Carga",
+                  marker: {
+                    color: cycleColors[1],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Fila Carga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: manobraCarga,
+                  type: "bar",
+                  name: "Manobra Carga",
+                  marker: {
+                    color: cycleColors[2],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Manobra Carga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: carga,
+                  type: "bar",
+                  name: "Carga",
+                  marker: {
+                    color: cycleColors[3],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Carga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: operandoCheio,
+                  type: "bar",
+                  name: "Operando Cheio",
+                  marker: {
+                    color: cycleColors[4],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Operando Cheio</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: filaDescarga,
+                  type: "bar",
+                  name: "Fila Descarga",
+                  marker: {
+                    color: cycleColors[5],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Fila Descarga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: manobraDescarga,
+                  type: "bar",
+                  name: "Manobra Descarga",
+                  marker: {
+                    color: cycleColors[6],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Manobra Descarga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+                {
+                  x: meses,
+                  y: descarga,
+                  type: "bar",
+                  name: "Descarga",
+                  marker: {
+                    color: cycleColors[7],
+                    line: { width: 1, color: "rgba(0,0,0,0.1)" },
+                  },
+                  hovertemplate:
+                    "<b>Descarga</b><br>%{x}<br>Tempo: %{y:.2f} min<extra></extra>",
+                },
+              ];
+
+              const layout = {
+                title: {
+                  text: "⏱️ Tempo de Ciclo Empilhado - Média Mensal",
+                  font: {
+                    size: 22,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                  x: 0.5,
+                  xanchor: "center",
+                },
+                barmode: "stack",
+                xaxis: {
+                  title: {
+                    text: "Período (Ano-Mês)",
+                    font: {
+                      size: 14,
+                      color: themeColors.text,
+                      family: "Arial, sans-serif",
+                    },
+                  },
+                  tickfont: {
+                    size: 12,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                  gridcolor: themeColors.grid,
+                  showgrid: true,
+                  zeroline: false,
+                },
+                yaxis: {
+                  title: {
+                    text: "Tempo Médio (Minutos)",
+                    font: {
+                      size: 14,
+                      color: themeColors.text,
+                      family: "Arial, sans-serif",
+                    },
+                  },
+                  tickfont: {
+                    size: 12,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                  gridcolor: themeColors.grid,
+                  showgrid: true,
+                  zeroline: true,
+                  zerolinecolor: themeColors.grid,
+                },
+                plot_bgcolor: themeColors.background,
+                paper_bgcolor: themeColors.paper,
+                font: {
+                  color: themeColors.text,
+                  family: "Arial, sans-serif",
+                },
+                legend: {
+                  orientation: "h",
+                  y: -0.12,
+                  x: 0.5,
+                  xanchor: "center",
+                  font: {
+                    size: 12,
+                    color: themeColors.text,
+                    family: "Arial, sans-serif",
+                  },
+                  bgcolor: themeColors.paper,
+                  bordercolor: themeColors.grid,
+                  borderwidth: 1,
+                  itemwidth: 30,
+                },
+                margin: { t: 100, b: 120, l: 80, r: 80 },
+                showlegend: true,
+                hovermode: "closest",
+              };
+
+              const config = {
+                displayModeBar: true,
+                modeBarButtonsToRemove: ["pan2d", "lasso2d", "select2d"],
+                displaylogo: false,
+                toImageButtonOptions: {
+                  format: "png",
+                  filename: "tempo_ciclo_empilhado",
+                  height: 600,
+                  width: 1200,
+                  scale: 2,
+                },
+              };
+
+              const plotStart = performance.now();
+
+              // Garantir que o loading seja removido
+              const chartElement = document.getElementById("chart");
+              if (chartElement) {
+                chartElement.innerHTML = "";
+              }
+
+              Plotly.newPlot("chart", traces, layout, config)
+                .then(() => {
+                  const plotTime = performance.now() - plotStart;
+                  const totalTime = performance.now() - startTime;
+
+                  console.log(
+                    `✅ [FRONTEND] Gráfico de tempo de ciclo empilhado criado em ${plotTime.toFixed(
+                      2
+                    )}ms`
+                  );
+                  console.log(
+                    `🎉 [FRONTEND] Processo completo em ${totalTime.toFixed(
+                      2
+                    )}ms`
+                  );
+
+                  // Marcar que há dados carregados no gráfico para permitir filtros
+                  graficoComDados = true;
+                  console.log(
+                    "✅ Gráfico de tempo de ciclo empilhado carregado. Filtros ativos."
+                  );
+                })
+                .catch((plotError) => {
+                  console.error(
+                    "❌ [FRONTEND] Erro ao criar gráfico:",
+                    plotError
+                  );
+
+                  // Remover loading e mostrar erro
+                  document.getElementById(
+                    "chart"
+                  ).innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                      <h3>Erro ao criar gráfico de tempo de ciclo</h3>
+                      <p><strong>Erro:</strong> ${plotError.message}</p>
+                      <p><small>Verifique o console para mais detalhes</small></p>
+                    </div>`;
+                });
+            })
+            .catch((error) => {
+              const errorTime = performance.now() - startTime;
+              console.error(
+                `❌ [FRONTEND] Erro após ${errorTime.toFixed(2)}ms:`,
+                error
+              );
+              console.error("❌ [FRONTEND] Stack trace:", error.stack);
+
+              let errorMessage = error.message;
+              if (
+                error.name === "TypeError" &&
+                error.message.includes("fetch")
+              ) {
+                errorMessage =
+                  "Erro de conexão com o servidor. Verifique se o FastAPI está rodando.";
+              }
+
+              // Garantir que o loading seja removido
+              const chartElement = document.getElementById("chart");
+              if (chartElement) {
+                chartElement.innerHTML = `<div style="color: red; text-align: center; padding: 50px;">
+                   <h3>Erro ao carregar dados de tempo de ciclo empilhado</h3>
+                   <p><strong>Mensagem:</strong> ${errorMessage}</p>
+                   <p><strong>Tempo:</strong> ${errorTime.toFixed(2)}ms</p>
+                   <p><small>Verifique o console para mais detalhes</small></p>
+                 </div>`;
+              }
             });
         }
       }

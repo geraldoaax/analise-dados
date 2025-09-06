@@ -117,6 +117,20 @@ class CacheStatusDTO(BaseModel):
     info: str = Field(..., description="Informações adicionais")
 
 
+class CycleTimeDataDTO(BaseModel):
+    """DTO para dados de tempo de ciclo empilhado"""
+    ano_mes: str = Field(..., description="Período no formato YYYY-MM")
+    operando_vazio: float = Field(..., description="Tempo médio operando vazio em minutos")
+    fila_carga: float = Field(..., description="Tempo médio em fila de carga em minutos")
+    manobra_carga: float = Field(..., description="Tempo médio de manobra de carga em minutos")
+    carga: float = Field(..., description="Tempo médio de carga em minutos")
+    operando_cheio: float = Field(..., description="Tempo médio operando cheio em minutos")
+    fila_descarga: float = Field(..., description="Tempo médio em fila de descarga em minutos")
+    manobra_descarga: float = Field(..., description="Tempo médio de manobra de descarga em minutos")
+    descarga: float = Field(..., description="Tempo médio de descarga em minutos")
+    total_ciclo: float = Field(..., description="Tempo total médio do ciclo em minutos")
+
+
 class ErrorResponseDTO(BaseModel):
     """DTO para respostas de erro"""
     error: str = Field(..., description="Mensagem de erro")
