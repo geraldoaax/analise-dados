@@ -4995,6 +4995,9 @@
               const manobraDescarga = data.map((item) => item.manobra_descarga);
               const descarga = data.map((item) => item.descarga);
 
+              // Dados para linha de média total do ciclo
+              const tempoTotalCiclo = data.map((item) => item.total_ciclo);
+
               // Obter cores do tema atual - CORRIGIDO
               const currentTheme =
                 document.documentElement.getAttribute("data-theme") || "light";
@@ -5003,13 +5006,13 @@
               // Paleta de cores bem diferenciadas para fases do ciclo
               const cycleColors = [
                 "#E74C3C", // Operando Vazio - Vermelho forte
-                "#2980B9", // Fila Carga - Azul escuro
-                "#27AE60", // Manobra Carga - Verde escuro
-                "#D35400", // Carga - Laranja escuro
-                "#8E44AD", // Operando Cheio - Roxo escuro
-                "#16A085", // Fila Descarga - Verde água escuro
+                "#3498DB", // Fila Carga - Azul brilhante
+                "#2ECC71", // Manobra Carga - Verde esmeralda
+                "#E67E22", // Carga - Laranja vibrante
+                "#9B59B6", // Operando Cheio - Roxo amethyst
+                "#1ABC9C", // Fila Descarga - Turquesa
                 "#C0392B", // Manobra Descarga - Vermelho escuro
-                "#F39C12", // Descarga - Amarelo laranja
+                "#F1C40F", // Descarga - Amarelo dourado
               ];
 
               // Criar traces para cada fase do ciclo
@@ -5112,9 +5115,38 @@
                 },
               ];
 
+              // Adicionar linha de média total do ciclo
+              const linhaMediaTotal = {
+                x: meses,
+                y: tempoTotalCiclo,
+                type: "scatter",
+                mode: "lines+markers",
+                name: "Média Total do Ciclo",
+                line: {
+                  color: "#00FF00",
+                  width: 4,
+                  dash: "solid",
+                },
+                marker: {
+                  color: "#00FF00",
+                  size: 8,
+                  symbol: "diamond",
+                  line: {
+                    color: "#FFFFFF",
+                    width: 2,
+                  },
+                },
+                hovertemplate:
+                  "<b>Média Total do Ciclo</b><br>%{x}<br>Tempo Total: %{y:.2f} min<extra></extra>",
+                yaxis: "y2", // Usar segundo eixo Y
+              };
+
+              // Adicionar linha aos traces
+              traces.push(linhaMediaTotal);
+
               const layout = {
                 title: {
-                  text: "⏱️ Tempo de Ciclo Empilhado - Média Mensal",
+                  text: "⏱️ Tempo de Ciclo Empilhado + Média Total Mensal",
                   font: {
                     size: 22,
                     color: themeColors.text,
@@ -5144,7 +5176,7 @@
                 },
                 yaxis: {
                   title: {
-                    text: "Tempo Médio (Minutos)",
+                    text: "Tempo Médio por Fase (Minutos)",
                     font: {
                       size: 14,
                       color: themeColors.text,
@@ -5160,6 +5192,24 @@
                   showgrid: true,
                   zeroline: true,
                   zerolinecolor: themeColors.grid,
+                },
+                yaxis2: {
+                  title: {
+                    text: "Tempo Total do Ciclo (Minutos)",
+                    font: {
+                      size: 14,
+                      color: "#00FF00",
+                      family: "Arial, sans-serif",
+                    },
+                  },
+                  tickfont: {
+                    size: 12,
+                    color: "#00FF00",
+                    family: "Arial, sans-serif",
+                  },
+                  overlaying: "y",
+                  side: "right",
+                  showgrid: false,
                 },
                 plot_bgcolor: themeColors.background,
                 paper_bgcolor: themeColors.paper,
